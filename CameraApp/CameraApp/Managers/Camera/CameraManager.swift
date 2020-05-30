@@ -8,11 +8,10 @@
 
 import AVFoundation
 
-
 protocol CameraManagerDelegate: class {
     
-    func didCaptureImage()
-    func didRecordVideo()
+    func didCaptureImage(imageData: Data)
+    func didRecordVideo(recordedUrl: URL)
 }
 
 typealias CameraCompletion = (Result<Void, Error>) -> Void
@@ -50,7 +49,8 @@ class CameraManager: NSObject {
         }
     }
     
-    func startCaptureSession(with previewView: PreviewView, delegate: CameraManagerDelegate) {
+    func startCaptureSession(with previewView: PreviewView,
+                             delegate: CameraManagerDelegate) {
         
         cameraConfigureManager.startCaptureSession(queue: sessionQueue) { [weak self] in
             previewView.session = self?.cameraConfigureManager.cameraComponents.captureSession
@@ -96,7 +96,8 @@ class CameraManager: NSObject {
     
     // MARK: - Private Methods
     
-    private func checkAccess(for mediaType: AVMediaType, completion: @escaping(_ isGranted: Bool) -> Void) {
+    private func checkAccess(for mediaType: AVMediaType,
+                             completion: @escaping(_ isGranted: Bool) -> Void) {
          
          switch AVCaptureDevice.authorizationStatus(for: mediaType) {
          case .authorized:
@@ -116,12 +117,14 @@ class CameraManager: NSObject {
 
 extension CameraManager: AVCapturePhotoCaptureDelegate {
     
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+    func photoOutput(_ output: AVCapturePhotoOutput,
+                     didFinishProcessingPhoto photo: AVCapturePhoto,
+                     error: Error?) {
         
         guard let imageData = photo.fileDataRepresentation() else {
             return
         }
-        //TODO: Pass image data to controller
+        delegate?.didCaptureImage(imageData: imageData)
     }
 }
 
@@ -130,12 +133,15 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
 
 extension CameraManager: AVCaptureFileOutputRecordingDelegate {
     
-    func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
+    func fileOutput(_ output: AVCaptureFileOutput,
+                    didFinishRecordingTo outputFileURL: URL,
+                    from connections: [AVCaptureConnection],
+                    error: Error?) {
         
         if error != nil {
             //TODO: Pass error to Controller
         } else {
-            //TODO: Perfrom something with recorded video
+            delegate?.didRecordVideo(recordedUrl: outputFileURL)
         }
     }
 }

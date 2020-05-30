@@ -8,6 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		0506EBB724828F17005A9D6A /* CameraConfigureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0506EBB624828F17005A9D6A /* CameraConfigureManager.swift */; };
+		0506EBB92482977B005A9D6A /* PreviewPhotoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0506EBB82482977B005A9D6A /* PreviewPhotoViewController.swift */; };
+		0506EBBB24829790005A9D6A /* PreviewVideoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0506EBBA24829790005A9D6A /* PreviewVideoViewController.swift */; };
+		0506EBBF24829F87005A9D6A /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0506EBBD24829F87005A9D6A /* PlayerView.swift */; };
+		0506EBC024829F87005A9D6A /* PlayerView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0506EBBE24829F87005A9D6A /* PlayerView.xib */; };
+		0506EBC324829FBB005A9D6A /* UiView+FromNib.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0506EBC224829FBB005A9D6A /* UiView+FromNib.swift */; };
 		0508D017248284AD00EFCBD7 /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0508D016248284AD00EFCBD7 /* StorageManager.swift */; };
 		0508D019248285AD00EFCBD7 /* ContentType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0508D018248285AD00EFCBD7 /* ContentType.swift */; };
 		0508D01C2482872A00EFCBD7 /* CameraActionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0508D01B2482872A00EFCBD7 /* CameraActionManager.swift */; };
@@ -26,6 +31,11 @@
 
 /* Begin PBXFileReference section */
 		0506EBB624828F17005A9D6A /* CameraConfigureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraConfigureManager.swift; sourceTree = "<group>"; };
+		0506EBB82482977B005A9D6A /* PreviewPhotoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewPhotoViewController.swift; sourceTree = "<group>"; };
+		0506EBBA24829790005A9D6A /* PreviewVideoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewVideoViewController.swift; sourceTree = "<group>"; };
+		0506EBBD24829F87005A9D6A /* PlayerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
+		0506EBBE24829F87005A9D6A /* PlayerView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = PlayerView.xib; sourceTree = "<group>"; };
+		0506EBC224829FBB005A9D6A /* UiView+FromNib.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UiView+FromNib.swift"; sourceTree = "<group>"; };
 		0508D016248284AD00EFCBD7 /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManager.swift; sourceTree = "<group>"; };
 		0508D018248285AD00EFCBD7 /* ContentType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentType.swift; sourceTree = "<group>"; };
 		0508D01B2482872A00EFCBD7 /* CameraActionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraActionManager.swift; sourceTree = "<group>"; };
@@ -55,6 +65,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0506EBBC24829F87005A9D6A /* PlayerView */ = {
+			isa = PBXGroup;
+			children = (
+				0506EBBD24829F87005A9D6A /* PlayerView.swift */,
+				0506EBBE24829F87005A9D6A /* PlayerView.xib */,
+			);
+			path = PlayerView;
+			sourceTree = "<group>";
+		};
+		0506EBC124829FA9005A9D6A /* Extenstions */ = {
+			isa = PBXGroup;
+			children = (
+				0506EBC224829FBB005A9D6A /* UiView+FromNib.swift */,
+			);
+			path = Extenstions;
+			sourceTree = "<group>";
+		};
 		0508D01A2482871600EFCBD7 /* Camera */ = {
 			isa = PBXGroup;
 			children = (
@@ -86,6 +113,7 @@
 		05C4E17C2471CCFC00F4EB99 /* Common */ = {
 			isa = PBXGroup;
 			children = (
+				0506EBC124829FA9005A9D6A /* Extenstions */,
 				0508D01E24828C6400EFCBD7 /* Enums */,
 				0508D01D24828C5A00EFCBD7 /* Models */,
 			);
@@ -169,6 +197,7 @@
 		05EB62032471A89400006BCE /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				0506EBBC24829F87005A9D6A /* PlayerView */,
 				05EB62052471A9C200006BCE /* PreviewView.swift */,
 			);
 			path = Views;
@@ -178,6 +207,8 @@
 			isa = PBXGroup;
 			children = (
 				05EB61EE2471A7EF00006BCE /* CameraViewController.swift */,
+				0506EBB82482977B005A9D6A /* PreviewPhotoViewController.swift */,
+				0506EBBA24829790005A9D6A /* PreviewVideoViewController.swift */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -243,6 +274,7 @@
 				05EB61F72471A7F400006BCE /* LaunchScreen.storyboard in Resources */,
 				05EB61F42471A7F400006BCE /* Assets.xcassets in Resources */,
 				05EB61F22471A7EF00006BCE /* Main.storyboard in Resources */,
+				0506EBC024829F87005A9D6A /* PlayerView.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -253,14 +285,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0506EBC324829FBB005A9D6A /* UiView+FromNib.swift in Sources */,
 				05C4E1802471CD2A00F4EB99 /* CameraPosition.swift in Sources */,
 				05EB61EF2471A7EF00006BCE /* CameraViewController.swift in Sources */,
 				0508D02024828C8800EFCBD7 /* CameraComponents.swift in Sources */,
+				0506EBBF24829F87005A9D6A /* PlayerView.swift in Sources */,
 				05EB62062471A9C200006BCE /* PreviewView.swift in Sources */,
 				05EB61EB2471A7EF00006BCE /* AppDelegate.swift in Sources */,
 				05EB61ED2471A7EF00006BCE /* SceneDelegate.swift in Sources */,
 				05EB62082471AB5300006BCE /* CameraManager.swift in Sources */,
 				0508D01C2482872A00EFCBD7 /* CameraActionManager.swift in Sources */,
+				0506EBBB24829790005A9D6A /* PreviewVideoViewController.swift in Sources */,
+				0506EBB92482977B005A9D6A /* PreviewPhotoViewController.swift in Sources */,
 				05C4E17E2471CD1100F4EB99 /* CameraError.swift in Sources */,
 				0506EBB724828F17005A9D6A /* CameraConfigureManager.swift in Sources */,
 				0508D017248284AD00EFCBD7 /* StorageManager.swift in Sources */,

@@ -14,6 +14,7 @@ class CameraViewController: UIViewController {
     
     // MARK: - Outlets
     
+    @IBOutlet weak var cameraButton: UIButton!
     @IBOutlet var previewView: PreviewView!
     
     
@@ -22,6 +23,7 @@ class CameraViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        cameraButton.layer.cornerRadius = 40
         CameraManager.shared.prepareCaptureSession { result in
             
             switch result {
@@ -48,20 +50,50 @@ class CameraViewController: UIViewController {
     
     // MARK: Action
     
-    @IBAction func capturePhoto() {
+    @IBAction func capturePhotoAction() {
         
         CameraManager.shared.captureImage()
+    }
+            
+    @IBAction func recordAction(_ sender: UILongPressGestureRecognizer) {
+        
+        switch sender.state {
+            
+        case .began:
+            let recordImage = UIImage(named: "recordVideoIcon")
+            cameraButton.setImage(recordImage, for: .normal)
+            CameraManager.shared.startRecording()
+        case .ended:
+            let captureImage = UIImage(named: "makePhotoIcon")
+            cameraButton.setImage(captureImage, for: .normal)
+            CameraManager.shared.stopRecoridng()
+        default:
+            break
+        }
+    }
+    
+    @IBAction func switchCameraAction() {
+        
+        CameraManager.shared.switchCameras()
     }
 }
 
 extension CameraViewController: CameraManagerDelegate {
     
-    func didCaptureImage() {
+    func didCaptureImage(imageData: Data) {
         
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let controller = storyboard.instantiateViewController(withIdentifier: "PreviewPhotoViewController") as! PreviewPhotoViewController
+        controller.setup(imageData: imageData)
+        present(controller, animated: false, completion: nil)
     }
     
-    func didRecordVideo() {
+    func didRecordVideo(recordedUrl: URL) {
         
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let controller = storyboard.instantiateViewController(withIdentifier: "PreviewVideoViewController") as! PreviewVideoViewController
+        controller.setup(videoURL: recordedUrl)
+        present(controller, animated: false, completion: nil)
     }
 }
 
