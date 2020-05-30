@@ -9,18 +9,10 @@
 import UIKit
 import AVFoundation
 
-protocol PreviewViewDelegate: class {
-    
-    func didCapturedPhoto(imageData: Data)
-    func didRecordedVideo()
-}
-
 class PreviewView: UIView {
     
     
     // MARK: - Properties
-    
-    weak var delegate: PreviewViewDelegate?
     
     var videoPreviewLayer: AVCaptureVideoPreviewLayer {
         guard let layer = layer as? AVCaptureVideoPreviewLayer else {
@@ -47,34 +39,5 @@ class PreviewView: UIView {
         
         videoPreviewLayer.videoGravity = .resizeAspectFill
         videoPreviewLayer.connection?.videoOrientation = .portrait
-    }
-}
-
-// MARK: - AVCapturePhotoCaptureDelegate
-
-extension PreviewView: AVCapturePhotoCaptureDelegate {
-    
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        
-        guard let imageData = photo.fileDataRepresentation() else {
-            return
-        }
-        
-        delegate?.didCapturedPhoto(imageData: imageData)
-    }
-}
-
-
-// MARK: - AVCaptureFileOutputRecordingDelegate
-
-extension PreviewView: AVCaptureFileOutputRecordingDelegate {
-    
-    func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
-        
-        if error != nil {
-            //TODO: Pass error to Controller
-        } else {
-            //TODO: Perfrom something with recorded video
-        }
     }
 }

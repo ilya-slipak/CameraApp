@@ -22,10 +22,13 @@ class CameraViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        previewView.delegate = self
-        CameraManager.shared.prepareCaptureSession { error in
-            if let error = error {
-                print(error.localizedDescription)
+        CameraManager.shared.prepareCaptureSession { result in
+            
+            switch result {
+            case .failure(let error):
+                 print(error.localizedDescription)
+            default:
+                break
             }
         }
     }
@@ -33,7 +36,7 @@ class CameraViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        CameraManager.shared.startCaptureSession(with: previewView)
+        CameraManager.shared.startCaptureSession(with: previewView, delegate: self)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -51,13 +54,13 @@ class CameraViewController: UIViewController {
     }
 }
 
-extension CameraViewController: PreviewViewDelegate {
+extension CameraViewController: CameraManagerDelegate {
     
-    func didCapturedPhoto(imageData: Data) {
+    func didCaptureImage() {
         
     }
     
-    func didRecordedVideo() {
+    func didRecordVideo() {
         
     }
 }
