@@ -63,7 +63,7 @@ class PlayerView: UIView {
         
         let playImage = UIImage(named: "playIcon")
         let pauseImage = UIImage(named: "pauseIcon")
-        let image = isPlaying ? playImage : pauseImage
+        let image = isPlaying ? pauseImage : playImage
         actionButton.setImage(image, for: .normal)
     }
     
