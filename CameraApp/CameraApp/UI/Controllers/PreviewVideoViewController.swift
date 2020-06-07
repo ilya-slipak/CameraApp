@@ -20,7 +20,7 @@ class PreviewVideoViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         playerView.setup(with: videoURL)
     }
     

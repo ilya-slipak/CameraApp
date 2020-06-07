@@ -8,39 +8,93 @@
 
 import AVFoundation
 
+typealias ConfigureCameraCompletion = (SessionSetupResult)
+
 class CameraConfigureManager {
     
+    private var sessionQueue = DispatchQueue(label: "label.session.queue")
     var cameraComponents: CameraComponents
     
     init(with components: CameraComponents) {
         
         cameraComponents = components
+        setupErrorObserver()
     }
     
     
     // MARK: - Public Methods
     
-    func startCaptureSession(queue: DispatchQueue, completion: @escaping () -> Void) {
+    func createCaptureSession() {
         
-        queue.async {
-            self.cameraComponents.captureSession.startRunning()
-            DispatchQueue.main.async {
-                completion()
-            }
+        checkAccess(for: .video)
+        
+        sessionQueue.async {
+            self.performCaptureSessionSetup()
         }
     }
     
-    func stopCaptureSession(queue: DispatchQueue, completion: @escaping () -> Void) {
+    func startCaptureSession(completion: @escaping CameraCompletion) {
         
-        queue.async {
+        sessionQueue.async {
+            
+            guard self.cameraComponents.sessionStatus == .authorized else {
+                DispatchQueue.main.async {
+                    completion(self.cameraComponents.sessionStatus)
+                }
+                return
+            }
+            
+            self.cameraComponents.captureSession.startRunning()
+            DispatchQueue.main.async {
+                completion(self.cameraComponents.sessionStatus)
+            }
+            
+        }
+    }
+    
+    func stopCaptureSession(completion: @escaping () -> Void) {
+        
+        sessionQueue.async {
             self.cameraComponents.captureSession.stopRunning()
             DispatchQueue.main.async {
                 completion()
             }
         }
     }
+        
+    func getCurrentCaptureDevice() -> AVCaptureDevice? {
+        
+        switch cameraComponents.currentCameraPosition {
+        case .front:
+            guard let frontCamera = cameraComponents.frontCamera else {
+                return nil
+            }
+            
+            return frontCamera
+        case .rear:
+            guard let rearCamera = cameraComponents.rearCamera else {
+                return nil
+            }
+            
+            return rearCamera
+        default:
+            return nil
+        }
+    }
     
-    func createCaptureSession(completion: @escaping CameraCompletion) {
+    func getCurrenFlashMode() -> AVCaptureDevice.FlashMode {
+        
+        return cameraComponents.flashMode
+    }
+    
+    
+    // MARK: - Private Methods
+    
+    private func performCaptureSessionSetup() {
+        
+        guard cameraComponents.sessionStatus == .authorized else {
+            return
+        }
         
         do {
             cameraComponents.captureSession.beginConfiguration()
@@ -48,22 +102,32 @@ class CameraConfigureManager {
             try configureDeviceInputs()
             try configurePhotoOutput()
             try configureMovieOutput()
-            cameraComponents.captureSession.commitConfiguration()
             if cameraComponents.captureSession.canSetSessionPreset(.hd1280x720) {
                 cameraComponents.captureSession.sessionPreset = .hd1280x720
             }
-            DispatchQueue.main.async {
-                completion(.success(()))
-            }
         } catch {
-            DispatchQueue.main.async {
-                completion(.failure(error))
+            self.cameraComponents.sessionStatus = .configurationFailed
+        }
+        cameraComponents.captureSession.commitConfiguration()
+    }
+        
+    private func checkAccess(for mediaType: AVMediaType) {
+        
+        switch AVCaptureDevice.authorizationStatus(for: mediaType) {
+        case .notDetermined:
+            sessionQueue.suspend()
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] isGranted in
+                if !isGranted {
+                    self?.cameraComponents.sessionStatus = .notAuthorized
+                }
+                self?.sessionQueue.resume()
             }
+        case .authorized:
+            return
+        default:
+            cameraComponents.sessionStatus = .notAuthorized
         }
     }
-    
-    
-    // MARK: - Private Methods
     
     private func configureCaptureDevices() throws {
         
@@ -150,6 +214,33 @@ class CameraConfigureManager {
         
         if cameraComponents.captureSession.canAddOutput(movieOutput) {
             cameraComponents.captureSession.addOutput(movieOutput)
+        }
+    }
+    
+    private func setupErrorObserver() {
+        
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(sessionRuntimeError),
+                                               name: .AVCaptureSessionRuntimeError,
+                                               object: cameraComponents.captureSession)
+    }
+    
+    @objc
+    private func sessionRuntimeError(notification: Notification) {
+        
+        guard let error = notification.userInfo?[AVCaptureSessionErrorKey] as? AVError else {
+            return
+        }
+        
+        print("Capture session runtime error: \(error)")
+        // If media services were reset, and the last start succeeded, restart the session.
+        if error.code == .mediaServicesWereReset {
+            sessionQueue.async {
+                
+                if !self.cameraComponents.captureSession.isRunning {
+                    self.cameraComponents.captureSession.startRunning()
+                }
+            }
         }
     }
 }

@@ -14,13 +14,13 @@ class CameraActionManager {
     
     // MARK: - Properties
 
-    var cameraComponets: CameraComponents
+    var cameraComponents: CameraComponents
     
     // MARK: - Public Methods
     
     init(with components: CameraComponents) {
         
-        cameraComponets = components
+        cameraComponents = components
     }
     
     func captureImage(previewView: PreviewView?,
@@ -31,21 +31,21 @@ class CameraActionManager {
         }
         
         var settings: AVCapturePhotoSettings
-        switch cameraComponets.currentCameraPosition {
+        switch cameraComponents.currentCameraPosition {
         case .rear:
             settings = AVCapturePhotoSettings()
-            settings.flashMode = cameraComponets.flashMode
+            settings.flashMode = cameraComponents.flashMode
         default:
             settings = AVCapturePhotoSettings()
         }
         
-        cameraComponets.photoOutput?.capturePhoto(with: settings, delegate: delegate)
+        cameraComponents.photoOutput?.capturePhoto(with: settings, delegate: delegate)
     }
     
     func startRecording(previewView: PreviewView?,
                         delegate: AVCaptureFileOutputRecordingDelegate) {
 
-        guard let movieOutput = cameraComponets.movieOutput, previewView != nil else {
+        guard let movieOutput = cameraComponents.movieOutput, previewView != nil else {
             return
         }
         
@@ -65,15 +65,15 @@ class CameraActionManager {
             
             var device: AVCaptureDevice
             
-            switch cameraComponets.currentCameraPosition {
+            switch cameraComponents.currentCameraPosition {
             case .front:
-                guard  let frontCameraInput = cameraComponets.frontCameraInput else {
+                guard  let frontCameraInput = cameraComponents.frontCameraInput else {
                     return
                 }
                 
                 device = frontCameraInput.device
             case .rear:
-                guard  let rearCameraInput = cameraComponets.rearCameraInput else {
+                guard  let rearCameraInput = cameraComponents.rearCameraInput else {
                     return
                 }
                 
@@ -92,11 +92,11 @@ class CameraActionManager {
                 }
             }
             
-            guard let outputURL = StorageManager.shared.getURL(for: .video) else {
+            guard let videoUrl = StorageManager.shared.getURL(for: .video) else {
                 return
             }
             
-            movieOutput.startRecording(to: outputURL, recordingDelegate: delegate)
+            movieOutput.startRecording(to: videoUrl, recordingDelegate: delegate)
         } else {
             stopRecording()
         }
@@ -104,7 +104,7 @@ class CameraActionManager {
     
     func stopRecording() {
         
-        guard let movieOutput = cameraComponets.movieOutput else {
+        guard let movieOutput = cameraComponents.movieOutput else {
             return
         }
         
@@ -115,9 +115,9 @@ class CameraActionManager {
         
     func switchCameras() throws {
         
-        cameraComponets.captureSession.beginConfiguration()
+        cameraComponents.captureSession.beginConfiguration()
         
-        switch cameraComponets.currentCameraPosition {
+        switch cameraComponents.currentCameraPosition {
         case .front:
             try switchToRearCamera()
         case .rear:
@@ -126,30 +126,45 @@ class CameraActionManager {
             throw CameraError.noCamerasAvailable
         }
         
-        cameraComponets.captureSession.commitConfiguration()
+        cameraComponents.captureSession.commitConfiguration()
+    }
+    
+    func flashAction() -> AVCaptureDevice.FlashMode {
+        
+        switch cameraComponents.flashMode {
+        case .auto:
+            cameraComponents.flashMode = .on
+        case .on:
+            cameraComponents.flashMode = .off
+        case .off:
+            cameraComponents.flashMode = .auto
+        @unknown default:
+            break
+        }
+        return cameraComponents.flashMode
     }
     
     
     // MARK: Private Methods
-    
+        
     private func switchToFrontCamera() throws {
         
         guard
-            let rearCameraInput = cameraComponets.rearCameraInput, cameraComponets.captureSession.inputs.contains(rearCameraInput),
-            let frontCamera = cameraComponets.frontCamera else { throw CameraError.invalidOperation }
+            let rearCameraInput = cameraComponents.rearCameraInput, cameraComponents.captureSession.inputs.contains(rearCameraInput),
+            let frontCamera = cameraComponents.frontCamera else { throw CameraError.invalidOperation }
         
-        cameraComponets.frontCameraInput = try AVCaptureDeviceInput(device: frontCamera)
+        cameraComponents.frontCameraInput = try AVCaptureDeviceInput(device: frontCamera)
         
-        guard let frontCameraInput = cameraComponets.frontCameraInput else {
+        guard let frontCameraInput = cameraComponents.frontCameraInput else {
             return
         }
         
-        cameraComponets.captureSession.removeInput(rearCameraInput)
+        cameraComponents.captureSession.removeInput(rearCameraInput)
         
-        if cameraComponets.captureSession.canAddInput(frontCameraInput) {
-            cameraComponets.captureSession.addInput(frontCameraInput)
+        if cameraComponents.captureSession.canAddInput(frontCameraInput) {
+            cameraComponents.captureSession.addInput(frontCameraInput)
             
-            cameraComponets.currentCameraPosition = .front
+            cameraComponents.currentCameraPosition = .front
         } else {
             throw CameraError.invalidOperation
         }
@@ -158,23 +173,23 @@ class CameraActionManager {
     private func switchToRearCamera() throws {
         
         guard
-            let frontCameraInput = cameraComponets.frontCameraInput, cameraComponets.captureSession.inputs.contains(frontCameraInput),
-            let rearCamera = cameraComponets.rearCamera else {
+            let frontCameraInput = cameraComponents.frontCameraInput, cameraComponents.captureSession.inputs.contains(frontCameraInput),
+            let rearCamera = cameraComponents.rearCamera else {
                 throw CameraError.invalidOperation
         }
         
-        cameraComponets.rearCameraInput = try AVCaptureDeviceInput(device: rearCamera)
+        cameraComponents.rearCameraInput = try AVCaptureDeviceInput(device: rearCamera)
         
-        guard let rearCameraInput = cameraComponets.rearCameraInput else {
+        guard let rearCameraInput = cameraComponents.rearCameraInput else {
             return
         }
         
-        cameraComponets.captureSession.removeInput(frontCameraInput)
+        cameraComponents.captureSession.removeInput(frontCameraInput)
         
-        if cameraComponets.captureSession.canAddInput(rearCameraInput) {
-            cameraComponets.captureSession.addInput(rearCameraInput)
+        if cameraComponents.captureSession.canAddInput(rearCameraInput) {
+            cameraComponents.captureSession.addInput(rearCameraInput)
             
-            cameraComponets.currentCameraPosition = .rear
+            cameraComponents.currentCameraPosition = .rear
         } else {
             throw CameraError.invalidOperation
         }

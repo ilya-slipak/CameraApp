@@ -20,4 +20,5 @@ class CameraComponents {
     var movieOutput: AVCaptureMovieFileOutput?
     var currentCameraPosition: CameraPosition?
     var flashMode: AVCaptureDevice.FlashMode = .off
+    var sessionStatus: SessionSetupResult = .authorized
 }

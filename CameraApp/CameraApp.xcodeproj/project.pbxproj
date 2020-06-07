@@ -17,6 +17,7 @@
 		0508D019248285AD00EFCBD7 /* ContentType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0508D018248285AD00EFCBD7 /* ContentType.swift */; };
 		0508D01C2482872A00EFCBD7 /* CameraActionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0508D01B2482872A00EFCBD7 /* CameraActionManager.swift */; };
 		0508D02024828C8800EFCBD7 /* CameraComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0508D01F24828C8800EFCBD7 /* CameraComponents.swift */; };
+		058FE3EB248D5A3D00DFF8C9 /* SessionSetupResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 058FE3EA248D5A3D00DFF8C9 /* SessionSetupResult.swift */; };
 		05C4E17E2471CD1100F4EB99 /* CameraError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05C4E17D2471CD1100F4EB99 /* CameraError.swift */; };
 		05C4E1802471CD2A00F4EB99 /* CameraPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05C4E17F2471CD2A00F4EB99 /* CameraPosition.swift */; };
 		05EB61EB2471A7EF00006BCE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05EB61EA2471A7EF00006BCE /* AppDelegate.swift */; };
@@ -40,6 +41,7 @@
 		0508D018248285AD00EFCBD7 /* ContentType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentType.swift; sourceTree = "<group>"; };
 		0508D01B2482872A00EFCBD7 /* CameraActionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraActionManager.swift; sourceTree = "<group>"; };
 		0508D01F24828C8800EFCBD7 /* CameraComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraComponents.swift; sourceTree = "<group>"; };
+		058FE3EA248D5A3D00DFF8C9 /* SessionSetupResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSetupResult.swift; sourceTree = "<group>"; };
 		05C4E17D2471CD1100F4EB99 /* CameraError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraError.swift; sourceTree = "<group>"; };
 		05C4E17F2471CD2A00F4EB99 /* CameraPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPosition.swift; sourceTree = "<group>"; };
 		05EB61E72471A7EF00006BCE /* CameraApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CameraApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -106,6 +108,7 @@
 				05C4E17D2471CD1100F4EB99 /* CameraError.swift */,
 				05C4E17F2471CD2A00F4EB99 /* CameraPosition.swift */,
 				0508D018248285AD00EFCBD7 /* ContentType.swift */,
+				058FE3EA248D5A3D00DFF8C9 /* SessionSetupResult.swift */,
 			);
 			path = Enums;
 			sourceTree = "<group>";
@@ -287,6 +290,7 @@
 			files = (
 				0506EBC324829FBB005A9D6A /* UiView+FromNib.swift in Sources */,
 				05C4E1802471CD2A00F4EB99 /* CameraPosition.swift in Sources */,
+				058FE3EB248D5A3D00DFF8C9 /* SessionSetupResult.swift in Sources */,
 				05EB61EF2471A7EF00006BCE /* CameraViewController.swift in Sources */,
 				0508D02024828C8800EFCBD7 /* CameraComponents.swift in Sources */,
 				0506EBBF24829F87005A9D6A /* PlayerView.swift in Sources */,
@@ -455,7 +459,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = ilyaslipak.camera.example.CameraApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -474,7 +478,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = ilyaslipak.camera.example.CameraApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};

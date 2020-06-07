@@ -7,79 +7,85 @@
 //
 
 import AVFoundation
+import UIKit
 
-protocol CameraManagerDelegate: class {
-    
-    func didCaptureImage(imageData: Data)
-    func didRecordVideo(recordedUrl: URL)
-}
 
-typealias CameraCompletion = (Result<Void, Error>) -> Void
+typealias CameraCompletion = (SessionSetupResult) -> Void
+typealias PhotoCompletion = (Result<Data, Error>) -> Void
+typealias VideoCompletion = (Result<URL, Error>) -> Void
+
 
 class CameraManager: NSObject {
     
     static let shared = CameraManager()
     
+    var photoCompletion: PhotoCompletion?
+    var videoCompletion: VideoCompletion?
     
     // MARK: - Private Properties
     
-    private var sessionQueue = DispatchQueue(label: "label.session.queue")
     private var cameraActionManager: CameraActionManager!
     private var cameraConfigureManager: CameraConfigureManager!
     private var previewView: PreviewView?
-    private weak var delegate: CameraManagerDelegate?
     
-
+    
     // MARK: - Public Methods
-            
-    func prepareCaptureSession(_ completion: @escaping CameraCompletion) {
+    
+    func prepareCaptureSession() {
         
         let cameraComponents = CameraComponents()
         cameraActionManager = CameraActionManager(with: cameraComponents)
         cameraConfigureManager = CameraConfigureManager(with: cameraComponents)
-        
-        sessionQueue.async {
-            self.checkAccess(for: .video) { [weak self] isGranted in
-                if isGranted {
-                    self?.cameraConfigureManager.createCaptureSession(completion: completion)
-                } else {
-                    //TODO: Send message to UI layer "Access for use camera didn't granted"
-                }
-            }
-        }
+        cameraConfigureManager.createCaptureSession()
     }
     
     func startCaptureSession(with previewView: PreviewView,
-                             delegate: CameraManagerDelegate) {
+                             _ completion: @escaping CameraCompletion) {
         
-        cameraConfigureManager.startCaptureSession(queue: sessionQueue) { [weak self] in
-            previewView.session = self?.cameraConfigureManager.cameraComponents.captureSession
-            self?.previewView = previewView
-            self?.delegate = delegate
+        cameraConfigureManager.startCaptureSession { [weak self] sessionStatus in
+            
+            switch sessionStatus {
+            case .authorized:
+                previewView.session = self?.cameraConfigureManager.cameraComponents.captureSession
+                self?.previewView = previewView
+            default:
+                completion(sessionStatus)
+            }
         }
     }
     
     func stopCaptureSession() {
         
-        cameraConfigureManager.stopCaptureSession(queue: sessionQueue) { [weak self] in
+        cameraConfigureManager.stopCaptureSession { [weak self] in
             
             self?.previewView?.session = nil
             self?.previewView = nil
-            self?.delegate = nil
         }
     }
     
-    func captureImage() {
+    func getCurrentCaptureDevice() -> AVCaptureDevice? {
+        
+        return cameraConfigureManager.getCurrentCaptureDevice()
+    }
+    
+    func getCurrentFlashMode() -> AVCaptureDevice.FlashMode {
+        
+        return cameraConfigureManager.getCurrenFlashMode()
+    }
+    
+    func captureImage(photoCompletion: @escaping PhotoCompletion) {
         
         cameraActionManager.captureImage(previewView: previewView, delegate: self)
+        self.photoCompletion = photoCompletion
     }
     
-    func startRecording() {
+    func startRecording(videoCompletion: @escaping VideoCompletion) {
         
         cameraActionManager.startRecording(previewView: previewView, delegate: self)
+        self.videoCompletion = videoCompletion
     }
     
-    func stopRecoridng() {
+    func stopRecording() {
         
         cameraActionManager.stopRecording()
     }
@@ -87,29 +93,16 @@ class CameraManager: NSObject {
     func switchCameras() {
         
         do {
-           try cameraActionManager.switchCameras()
+            try cameraActionManager.switchCameras()
         } catch {
-            print("Failed to switch cameras:",error.localizedDescription)
+            print("Failed to switch cameras:", error.localizedDescription)
         }
     }
     
-    
-    // MARK: - Private Methods
-    
-    private func checkAccess(for mediaType: AVMediaType,
-                             completion: @escaping(_ isGranted: Bool) -> Void) {
-         
-         switch AVCaptureDevice.authorizationStatus(for: mediaType) {
-         case .authorized:
-             completion(true)
-         case .notDetermined:
-             AVCaptureDevice.requestAccess(for: mediaType, completionHandler: { granted in
-                 completion(granted)
-             })
-         default:
-             completion(false)
-         }
-     }
+    func flashAction() -> AVCaptureDevice.FlashMode {
+        
+        return cameraActionManager.flashAction()
+    }
 }
 
 
@@ -117,14 +110,15 @@ class CameraManager: NSObject {
 
 extension CameraManager: AVCapturePhotoCaptureDelegate {
     
-    func photoOutput(_ output: AVCapturePhotoOutput,
-                     didFinishProcessingPhoto photo: AVCapturePhoto,
-                     error: Error?) {
+    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         
-        guard let imageData = photo.fileDataRepresentation() else {
-            return
+        if let error = error {
+            photoCompletion?(.failure(error))
+        } else if let imageData = photo.fileDataRepresentation() {
+            photoCompletion?(.success(imageData))
         }
-        delegate?.didCaptureImage(imageData: imageData)
+        
+        photoCompletion = nil
     }
 }
 
@@ -133,15 +127,14 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
 
 extension CameraManager: AVCaptureFileOutputRecordingDelegate {
     
-    func fileOutput(_ output: AVCaptureFileOutput,
-                    didFinishRecordingTo outputFileURL: URL,
-                    from connections: [AVCaptureConnection],
-                    error: Error?) {
+    func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
         
-        if error != nil {
-            //TODO: Pass error to Controller
+        if let error = error {
+            videoCompletion?(.failure(error))
         } else {
-            delegate?.didRecordVideo(recordedUrl: outputFileURL)
+            videoCompletion?(.success(outputFileURL))
         }
+        
+        videoCompletion = nil
     }
 }

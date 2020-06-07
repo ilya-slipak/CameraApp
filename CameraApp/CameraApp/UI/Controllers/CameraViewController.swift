@@ -24,21 +24,23 @@ class CameraViewController: UIViewController {
         super.viewDidLoad()
         
         cameraButton.layer.cornerRadius = 40
-        CameraManager.shared.prepareCaptureSession { result in
-            
-            switch result {
-            case .failure(let error):
-                 print(error.localizedDescription)
-            default:
-                break
-            }
-        }
+        CameraManager.shared.prepareCaptureSession()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        CameraManager.shared.startCaptureSession(with: previewView, delegate: self)
+        CameraManager.shared.startCaptureSession(with: previewView) { sessionStatus in
+            
+            switch sessionStatus {
+            case .notAuthorized:
+                print("Please go to setting and enable access to camera")
+            case .configurationFailed:
+                print("Failed to configure camera")
+            case .authorized:
+                return
+            }
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -47,12 +49,37 @@ class CameraViewController: UIViewController {
         super.viewWillDisappear(animated)
     }
     
+    private func showPhotoPreview(with imageData: Data) {
+        
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let controller = storyboard.instantiateViewController(withIdentifier: "PreviewPhotoViewController") as! PreviewPhotoViewController
+        controller.setup(imageData: imageData)
+        present(controller, animated: false, completion: nil)
+    }
+    
+    private func showVideoPreview(with videoURL: URL) {
+        
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let controller = storyboard.instantiateViewController(withIdentifier: "PreviewVideoViewController") as! PreviewVideoViewController
+        controller.setup(videoURL: videoURL)
+        present(controller, animated: false, completion: nil)
+    }
+    
     
     // MARK: Action
     
     @IBAction func capturePhotoAction() {
         
-        CameraManager.shared.captureImage()
+        CameraManager.shared.captureImage { [weak self] result in
+            
+            switch result {
+            case .success(let imageData):
+                self?.showPhotoPreview(with: imageData)
+            case .failure(let error):
+                print("Failed to capture image:", error)
+            }
+            
+        }
     }
             
     @IBAction func recordAction(_ sender: UILongPressGestureRecognizer) {
@@ -62,11 +89,18 @@ class CameraViewController: UIViewController {
         case .began:
             let recordImage = UIImage(named: "recordVideoIcon")
             cameraButton.setImage(recordImage, for: .normal)
-            CameraManager.shared.startRecording()
+            CameraManager.shared.startRecording { [weak self] result in
+                switch result {
+                case .success(let videoURL):
+                    self?.showVideoPreview(with: videoURL)
+                case .failure(let error):
+                    print("Failed to record video:", error)
+                }
+            }
         case .ended:
             let captureImage = UIImage(named: "makePhotoIcon")
             cameraButton.setImage(captureImage, for: .normal)
-            CameraManager.shared.stopRecoridng()
+            CameraManager.shared.stopRecording()
         default:
             break
         }
@@ -75,25 +109,6 @@ class CameraViewController: UIViewController {
     @IBAction func switchCameraAction() {
         
         CameraManager.shared.switchCameras()
-    }
-}
-
-extension CameraViewController: CameraManagerDelegate {
-    
-    func didCaptureImage(imageData: Data) {
-        
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        let controller = storyboard.instantiateViewController(withIdentifier: "PreviewPhotoViewController") as! PreviewPhotoViewController
-        controller.setup(imageData: imageData)
-        present(controller, animated: false, completion: nil)
-    }
-    
-    func didRecordVideo(recordedUrl: URL) {
-        
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        let controller = storyboard.instantiateViewController(withIdentifier: "PreviewVideoViewController") as! PreviewVideoViewController
-        controller.setup(videoURL: recordedUrl)
-        present(controller, animated: false, completion: nil)
     }
 }
 
