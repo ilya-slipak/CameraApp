@@ -81,7 +81,7 @@ class CameraViewController: UIViewController {
             
         }
     }
-            
+    
     @IBAction func recordAction(_ sender: UILongPressGestureRecognizer) {
         
         switch sender.state {

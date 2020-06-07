@@ -23,17 +23,18 @@ class PreviewVideoViewController: UIViewController {
         
         playerView.setup(with: videoURL)
     }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
         
-        playerView.startPlaying()
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+         playerView.startPlaying()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
         
         playerView.stopPlaying()
+        
+        super.viewWillDisappear(animated)
     }
     
     @IBAction func closeAction(_ sender: UIButton) {
