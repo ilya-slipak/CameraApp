@@ -16,6 +16,7 @@ class CameraActionManager {
 
     var cameraComponents: CameraComponents
     
+    
     // MARK: - Public Methods
     
     init(with components: CameraComponents) {
@@ -23,12 +24,7 @@ class CameraActionManager {
         cameraComponents = components
     }
     
-    func captureImage(previewView: PreviewView?,
-                      delegate: AVCapturePhotoCaptureDelegate) {
-        
-        guard previewView != nil else {
-            return
-        }
+    func captureImage(delegate: AVCapturePhotoCaptureDelegate) {
         
         var settings: AVCapturePhotoSettings
         switch cameraComponents.currentCameraPosition {
@@ -42,10 +38,9 @@ class CameraActionManager {
         cameraComponents.photoOutput?.capturePhoto(with: settings, delegate: delegate)
     }
     
-    func startRecording(previewView: PreviewView?,
-                        delegate: AVCaptureFileOutputRecordingDelegate) {
+    func startRecording(delegate: AVCaptureFileOutputRecordingDelegate) {
 
-        guard let movieOutput = cameraComponents.movieOutput, previewView != nil else {
+        guard let movieOutput = cameraComponents.movieOutput else {
             return
         }
         
@@ -56,7 +51,7 @@ class CameraActionManager {
             }
             
             if connection.isVideoOrientationSupported {
-                connection.videoOrientation = currentVideoOrientation()
+                connection.videoOrientation = .portrait
             }
             
             if connection.isVideoStabilizationSupported {
@@ -195,6 +190,7 @@ class CameraActionManager {
         }
     }
     
+    //TODO: Will be added soon
     private func currentVideoOrientation() -> AVCaptureVideoOrientation {
         
         var orientation: AVCaptureVideoOrientation

@@ -18,19 +18,24 @@ class CameraViewController: UIViewController {
     @IBOutlet var previewView: PreviewView!
     
     
+    // MARK: - Private Properties
+    
+    private let cameraManager: CameraManager = CameraManager()
+    
+    
     // MARK: - Lifecyle Methods
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         cameraButton.layer.cornerRadius = 40
-        CameraManager.shared.prepareCaptureSession()
+        cameraManager.prepareCaptureSession()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        CameraManager.shared.startCaptureSession(with: previewView) { sessionStatus in
+        cameraManager.startCaptureSession() { [weak self] sessionStatus in
             
             switch sessionStatus {
             case .notAuthorized:
@@ -38,14 +43,18 @@ class CameraViewController: UIViewController {
             case .configurationFailed:
                 print("Failed to configure camera")
             case .authorized:
-                return
+                self?.previewView.session = self?.cameraManager.captureSession
             }
         }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         
-        CameraManager.shared.stopCaptureSession()
+        cameraManager.stopCaptureSession { [weak self] in
+            
+            self?.previewView.session = nil
+        }
+        
         super.viewWillDisappear(animated)
     }
     
@@ -70,7 +79,7 @@ class CameraViewController: UIViewController {
     
     @IBAction func capturePhotoAction() {
         
-        CameraManager.shared.captureImage { [weak self] result in
+        cameraManager.captureImage { [weak self] result in
             
             switch result {
             case .success(let imageData):
@@ -89,7 +98,7 @@ class CameraViewController: UIViewController {
         case .began:
             let recordImage = UIImage(named: "recordVideoIcon")
             cameraButton.setImage(recordImage, for: .normal)
-            CameraManager.shared.startRecording { [weak self] result in
+            cameraManager.startRecording { [weak self] result in
                 switch result {
                 case .success(let videoURL):
                     self?.showVideoPreview(with: videoURL)
@@ -100,7 +109,7 @@ class CameraViewController: UIViewController {
         case .ended:
             let captureImage = UIImage(named: "makePhotoIcon")
             cameraButton.setImage(captureImage, for: .normal)
-            CameraManager.shared.stopRecording()
+            cameraManager.stopRecording()
         default:
             break
         }
@@ -108,7 +117,7 @@ class CameraViewController: UIViewController {
     
     @IBAction func switchCameraAction() {
         
-        CameraManager.shared.switchCameras()
+        cameraManager.switchCameras()
     }
 }
 

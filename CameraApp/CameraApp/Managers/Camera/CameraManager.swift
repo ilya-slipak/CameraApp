@@ -7,26 +7,27 @@
 //
 
 import AVFoundation
-import UIKit
-
 
 typealias CameraCompletion = (SessionSetupResult) -> Void
 typealias PhotoCompletion = (Result<Data, Error>) -> Void
 typealias VideoCompletion = (Result<URL, Error>) -> Void
 
-
 class CameraManager: NSObject {
     
-    static let shared = CameraManager()
+
+    // MARK: - Public Properties
     
-    var photoCompletion: PhotoCompletion?
-    var videoCompletion: VideoCompletion?
-    
+    var captureSession: AVCaptureSession {
+        
+        return cameraConfigureManager.cameraComponents.captureSession
+    }
+        
     // MARK: - Private Properties
     
     private var cameraActionManager: CameraActionManager!
     private var cameraConfigureManager: CameraConfigureManager!
-    private var previewView: PreviewView?
+    private var photoCompletion: PhotoCompletion?
+    private var videoCompletion: VideoCompletion?
     
     
     // MARK: - Public Methods
@@ -39,28 +40,14 @@ class CameraManager: NSObject {
         cameraConfigureManager.createCaptureSession()
     }
     
-    func startCaptureSession(with previewView: PreviewView,
-                             _ completion: @escaping CameraCompletion) {
+    func startCaptureSession(completion: @escaping CameraCompletion) {
         
-        cameraConfigureManager.startCaptureSession { [weak self] sessionStatus in
-            
-            switch sessionStatus {
-            case .authorized:
-                previewView.session = self?.cameraConfigureManager.cameraComponents.captureSession
-                self?.previewView = previewView
-            default:
-                completion(sessionStatus)
-            }
-        }
+        cameraConfigureManager.startCaptureSession(completion: completion)
     }
     
-    func stopCaptureSession() {
+    func stopCaptureSession(completion: @escaping () -> Void) {
         
-        cameraConfigureManager.stopCaptureSession { [weak self] in
-            
-            self?.previewView?.session = nil
-            self?.previewView = nil
-        }
+        cameraConfigureManager.stopCaptureSession(completion: completion)
     }
     
     func getCurrentCaptureDevice() -> AVCaptureDevice? {
@@ -75,14 +62,14 @@ class CameraManager: NSObject {
     
     func captureImage(photoCompletion: @escaping PhotoCompletion) {
         
-        cameraActionManager.captureImage(previewView: previewView, delegate: self)
         self.photoCompletion = photoCompletion
+        cameraActionManager.captureImage(delegate: self)
     }
     
     func startRecording(videoCompletion: @escaping VideoCompletion) {
         
-        cameraActionManager.startRecording(previewView: previewView, delegate: self)
         self.videoCompletion = videoCompletion
+        cameraActionManager.startRecording(delegate: self)
     }
     
     func stopRecording() {
