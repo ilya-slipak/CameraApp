@@ -9,7 +9,7 @@
 import UIKit
 import AVFoundation
 
-class CameraActionManager {
+final class CameraActionManager {
     
     
     // MARK: - Properties

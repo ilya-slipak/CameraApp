@@ -8,7 +8,7 @@
 
 import UIKit
 
-class PreviewVideoViewController: UIViewController {
+final class PreviewVideoViewController: UIViewController {
     
     @IBOutlet weak var playerView: PlayerView!
     private var videoURL: URL!

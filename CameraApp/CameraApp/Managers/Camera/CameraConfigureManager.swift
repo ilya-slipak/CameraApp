@@ -10,7 +10,7 @@ import AVFoundation
 
 typealias ConfigureCameraCompletion = (SessionSetupResult)
 
-class CameraConfigureManager {
+final class CameraConfigureManager {
     
     private var sessionQueue = DispatchQueue(label: "label.session.queue")
     var cameraComponents: CameraComponents

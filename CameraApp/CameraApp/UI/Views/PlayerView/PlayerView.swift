@@ -9,7 +9,7 @@
 import UIKit
 import AVFoundation
 
-class PlayerView: UIView {
+final class PlayerView: UIView {
     
     @IBOutlet weak var actionButton: UIButton!
     

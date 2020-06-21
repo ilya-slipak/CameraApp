@@ -12,7 +12,7 @@ typealias CameraCompletion = (SessionSetupResult) -> Void
 typealias PhotoCompletion = (Result<Data, Error>) -> Void
 typealias VideoCompletion = (Result<URL, Error>) -> Void
 
-class CameraManager: NSObject {
+final class CameraManager: NSObject {
     
 
     // MARK: - Public Properties

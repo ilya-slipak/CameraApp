@@ -9,7 +9,7 @@
 import Foundation
 import AVFoundation
 
-class CameraComponents {
+final class CameraComponents {
     
     var captureSession: AVCaptureSession = AVCaptureSession()
     var frontCamera: AVCaptureDevice?

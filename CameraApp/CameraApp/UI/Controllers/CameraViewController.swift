@@ -9,7 +9,7 @@
 import UIKit
 import AVFoundation
 
-class CameraViewController: UIViewController {
+final class CameraViewController: UIViewController {
     
     
     // MARK: - Outlets
