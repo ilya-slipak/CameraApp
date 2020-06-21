@@ -117,7 +117,7 @@ final class CameraViewController: UIViewController {
     
     @IBAction func switchCameraAction() {
         
-        cameraManager.switchCameras()
+        cameraManager.switchCamera()
     }
 }
 

@@ -108,7 +108,7 @@ final class CameraActionManager {
         }
     }
         
-    func switchCameras() throws {
+    func switchCamera() throws {
         
         cameraComponents.captureSession.beginConfiguration()
         
@@ -124,7 +124,7 @@ final class CameraActionManager {
         cameraComponents.captureSession.commitConfiguration()
     }
     
-    func flashAction() -> AVCaptureDevice.FlashMode {
+    func switchFlashMode() -> AVCaptureDevice.FlashMode {
         
         switch cameraComponents.flashMode {
         case .auto:

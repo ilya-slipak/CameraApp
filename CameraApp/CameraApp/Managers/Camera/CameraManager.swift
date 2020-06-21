@@ -17,9 +17,14 @@ final class CameraManager: NSObject {
 
     // MARK: - Public Properties
     
+    var components: CameraComponents {
+        
+        return cameraConfigureManager.cameraComponents
+    }
+    
     var captureSession: AVCaptureSession {
         
-        return cameraConfigureManager.cameraComponents.captureSession
+        return components.captureSession
     }
         
     // MARK: - Private Properties
@@ -77,18 +82,18 @@ final class CameraManager: NSObject {
         cameraActionManager.stopRecording()
     }
     
-    func switchCameras() {
+    func switchCamera() {
         
         do {
-            try cameraActionManager.switchCameras()
+            try cameraActionManager.switchCamera()
         } catch {
             print("Failed to switch cameras:", error.localizedDescription)
         }
     }
     
-    func flashAction() -> AVCaptureDevice.FlashMode {
+    func switchFlashMode() -> AVCaptureDevice.FlashMode {
         
-        return cameraActionManager.flashAction()
+        return cameraActionManager.switchFlashMode()
     }
 }
 
