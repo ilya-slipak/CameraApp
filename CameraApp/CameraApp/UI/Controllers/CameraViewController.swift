@@ -49,13 +49,12 @@ final class CameraViewController: UIViewController {
     }
     
     override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
         
         cameraManager.stopCaptureSession { [weak self] in
             
             self?.previewView.session = nil
         }
-        
-        super.viewWillDisappear(animated)
     }
     
     private func showPhotoPreview(with imageData: Data) {
