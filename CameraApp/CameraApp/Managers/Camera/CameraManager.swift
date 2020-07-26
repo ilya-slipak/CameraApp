@@ -84,11 +84,7 @@ final class CameraManager: NSObject {
     
     func switchCamera() {
         
-        do {
-            try cameraActionManager.switchCamera()
-        } catch {
-            print("Failed to switch cameras:", error.localizedDescription)
-        }
+        cameraActionManager.switchCamera()
     }
     
     func switchFlashMode() -> AVCaptureDevice.FlashMode {

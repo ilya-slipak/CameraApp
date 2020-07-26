@@ -108,20 +108,24 @@ final class CameraActionManager {
         }
     }
         
-    func switchCamera() throws {
+    func switchCamera() {
         
         cameraComponents.captureSession.beginConfiguration()
         
-        switch cameraComponents.currentCameraPosition {
-        case .front:
-            try switchToRearCamera()
-        case .rear:
-            try switchToFrontCamera()
-        case .none:
-            throw CameraError.noCamerasAvailable
+        do {
+            switch cameraComponents.currentCameraPosition {
+            case .front:
+                try switchToRearCamera()
+            case .rear:
+                try switchToFrontCamera()
+            case .none:
+                break
+            }
+            
+            cameraComponents.captureSession.commitConfiguration()
+        } catch {
+            print("Failed to switch camera:", error.localizedDescription)
         }
-        
-        cameraComponents.captureSession.commitConfiguration()
     }
     
     func switchFlashMode() -> AVCaptureDevice.FlashMode {

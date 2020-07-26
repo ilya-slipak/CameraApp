@@ -56,7 +56,7 @@ final class CameraViewController: UIViewController {
             self?.previewView.session = nil
         }
     }
-    
+        
     private func showPhotoPreview(with imageData: Data) {
         
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
