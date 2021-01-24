@@ -10,7 +10,7 @@ import UIKit
 
 final class PreviewPhotoViewController: UIViewController {
 
-    @IBOutlet weak var previewImageView: UIImageView!
+    @IBOutlet private weak var previewImageView: UIImageView!
     
     private var imageData: Data!
     

@@ -11,9 +11,9 @@ import AVFoundation
 
 final class PreviewView: UIView {
     
-    
     // MARK: - Properties
     
+    private var focusSquareView: FocusSquareView?
     var videoPreviewLayer: AVCaptureVideoPreviewLayer {
         guard let layer = layer as? AVCaptureVideoPreviewLayer else {
             fatalError("Expected `AVCaptureVideoPreviewLayer` type for layer. Check PreviewView.layerClass implementation.")
@@ -37,7 +37,31 @@ final class PreviewView: UIView {
     override func awakeFromNib() {
         super.awakeFromNib()
         
+        focusSquareView = FocusSquareView(frame: CGRect(x: 0, y: 0, width: 60, height: 60))
         videoPreviewLayer.videoGravity = .resizeAspectFill
         videoPreviewLayer.connection?.videoOrientation = .portrait
+    }
+    
+    func addFocusSquare(point: CGPoint) {
+        
+        let isContain = subviews.contains(where: { $0 is FocusSquareView })
+        
+        if isContain {
+            removeFocusSquare()
+        }
+        
+        guard let focusSquareView = focusSquareView else {
+            return
+        }
+        addSubview(focusSquareView)
+        focusSquareView.center = point
+        focusSquareView.animate { [weak self] in
+            self?.removeFocusSquare()
+        }
+    }
+    
+    func removeFocusSquare() {
+        
+        focusSquareView?.stopAnimation()
     }
 }

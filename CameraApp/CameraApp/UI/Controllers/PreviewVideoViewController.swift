@@ -10,7 +10,7 @@ import UIKit
 
 final class PreviewVideoViewController: UIViewController {
     
-    @IBOutlet weak var playerView: PlayerView!
+    @IBOutlet private weak var playerView: PlayerView!
     private var videoURL: URL!
     
     func setup(videoURL: URL) {
@@ -31,15 +31,13 @@ final class PreviewVideoViewController: UIViewController {
     }
     
     override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
         
         playerView.stopPlaying()
-        
-        super.viewWillDisappear(animated)
     }
     
     @IBAction func closeAction(_ sender: UIButton) {
         
         dismiss(animated: false)
     }
-    
 }

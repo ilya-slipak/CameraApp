@@ -13,14 +13,4 @@ enum SessionSetupResult {
     case authorized
     case notAuthorized
     case configurationFailed
-    
-    var message: String {
-        
-        switch self {
-        case .configurationFailed:
-            return "Failed to configure camera"
-        default:
-            return "Something went wrong"
-        }
-    }
 }

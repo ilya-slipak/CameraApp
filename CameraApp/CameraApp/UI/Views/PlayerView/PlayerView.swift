@@ -18,8 +18,8 @@ final class PlayerView: UIView {
      
     override func awakeFromNib() {
         super.awakeFromNib()
-        self.fromNib()
         
+        makeFromNib()
     }
     
     override func layoutSubviews() {

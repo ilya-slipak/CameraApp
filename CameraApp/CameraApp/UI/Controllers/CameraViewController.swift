@@ -9,47 +9,115 @@
 import UIKit
 import AVFoundation
 
-final class CameraViewController: UIViewController {
+final class CameraViewController: UIViewController, AlertShowable {
     
+    // MARK: - IBOutlet Properties
     
-    // MARK: - Outlets
-    
-    @IBOutlet weak var cameraButton: UIButton!
-    @IBOutlet var previewView: PreviewView!
-    
+    @IBOutlet private weak var flashButton: UIButton!
+    @IBOutlet private weak var cameraButton: UIButton!
+    @IBOutlet private weak var previewView: PreviewView!
     
     // MARK: - Private Properties
     
+    private var zoomFactor: CGFloat = 1.0
     private let cameraManager: CameraManager = CameraManager()
     
-    
-    // MARK: - Lifecyle Methods
+    // MARK: - Lifecycle Methods
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        cameraButton.layer.cornerRadius = 40
-        cameraManager.prepareCaptureSession()
+        setupView()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
+        startCaptureSession()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        stopCaptureSession()
+    }
+    
+    // MARK: - Private Methods
+    
+    private func setupView() {
+        
+        flashButton.tintColor = .white
+        cameraButton.layer.cornerRadius = 40
+        setupPinchGesture()
+        setupTapGesture()
+        cameraManager.prepareCaptureSession()
+    }
+        
+    private func setupPinchGesture() {
+        
+        let pinchRecognizer = UIPinchGestureRecognizer(target: self,
+                                                       action: #selector(pinchToZoom(_:)))
+        view.addGestureRecognizer(pinchRecognizer)
+    }
+    
+    private func setupTapGesture() {
+        
+        let pinchRecognizer = UITapGestureRecognizer(target: self,
+                                                     action: #selector(focusAction(_:)))
+        view.addGestureRecognizer(pinchRecognizer)
+    }
+    
+    private func setupFlashButton(with flashMode: AVCaptureDevice.FlashMode) {
+        
+        switch flashMode {
+        case .auto:
+            flashButton.setTitle("Auto", for: .normal)
+        case .on:
+            flashButton.setTitle("On", for: .normal)
+        case .off:
+            flashButton.setTitle("Off", for: .normal)
+        default:
+            return
+        }
+    }
+    
+    func setupObservers() {
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(didEnterBackground),
+            name: UIApplication.didEnterBackgroundNotification,
+            object: nil)
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(didBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil)
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(subjectAreaDidChange),
+            name: .AVCaptureDeviceSubjectAreaDidChange,
+            object: nil)
+    }
+    
+    private func startCaptureSession() {
+        
         cameraManager.startCaptureSession() { [weak self] sessionStatus in
             
             switch sessionStatus {
             case .notAuthorized:
-                print("Please go to setting and enable access to camera")
+                self?.showSettingsAlert(with: .cameraAccess)
             case .configurationFailed:
-                print("Failed to configure camera")
+                self?.showMessage(with: "Failed to configure camera")
             case .authorized:
                 self?.previewView.session = self?.cameraManager.captureSession
             }
         }
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
+    private func stopCaptureSession() {
         
         cameraManager.stopCaptureSession { [weak self] in
             
@@ -59,22 +127,91 @@ final class CameraViewController: UIViewController {
         
     private func showPhotoPreview(with imageData: Data) {
         
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        let controller = storyboard.instantiateViewController(withIdentifier: "PreviewPhotoViewController") as! PreviewPhotoViewController
-        controller.setup(imageData: imageData)
+        let controller = ScreenFactory.makePhotoPreviewScreen(with: imageData)
         present(controller, animated: false, completion: nil)
     }
     
     private func showVideoPreview(with videoURL: URL) {
         
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        let controller = storyboard.instantiateViewController(withIdentifier: "PreviewVideoViewController") as! PreviewVideoViewController
-        controller.setup(videoURL: videoURL)
+        let controller = ScreenFactory.makeVideoPreviewScreen(with: videoURL)
         present(controller, animated: false, completion: nil)
     }
     
+    @objc
+    private func subjectAreaDidChange(notification: NSNotification) {
+        
+        let devicePoint = CGPoint(x: 0.5, y: 0.5)
+        cameraManager.focus(with: .continuousAutoFocus,
+                            exposureMode: .continuousAutoExposure,
+                            at: devicePoint,
+                            monitorSubjectAreaChange: false)
+    }
     
-    // MARK: Action
+    @objc
+    private func didBecomeActive() {
+        
+        startCaptureSession()
+    }
+    
+    @objc
+    private func didEnterBackground() {
+        
+        stopCaptureSession()
+    }
+    
+    // MARK: - Action Methods
+    
+    @IBAction func flashAction(_ sender: UIButton) {
+        
+        let flashMode = cameraManager.switchFlashMode()
+        setupFlashButton(with: flashMode)
+    }
+        
+    @objc
+    func focusAction(_ sender: UITapGestureRecognizer) {
+        
+        let devicePoint = previewView.videoPreviewLayer.captureDevicePointConverted(fromLayerPoint: sender.location(in: sender.view))
+        
+        previewView.addFocusSquare(point: sender.location(in: previewView))
+        cameraManager.focus(with: .autoFocus,
+                            exposureMode: .autoExpose,
+                            at: devicePoint,
+                            monitorSubjectAreaChange: true)
+    }
+            
+    @objc
+    func pinchToZoom(_ pinch: UIPinchGestureRecognizer) {
+        
+        guard let device = cameraManager.getCurrentCaptureDevice() else {
+            return
+        }
+        
+        func minMaxZoom(_ factor: CGFloat) -> CGFloat { return min(max(factor, 1.0), device.activeFormat.videoMaxZoomFactor) }
+        
+        func update(scale factor: CGFloat) {
+            do {
+                try device.lockForConfiguration()
+                defer { device.unlockForConfiguration() }
+                device.videoZoomFactor = factor
+            } catch {
+                debugPrint(error)
+            }
+        }
+        
+        let newScaleFactor = minMaxZoom(pinch.scale * zoomFactor)
+        
+        switch pinch.state {
+        case .began:
+            fallthrough
+        case .changed:
+            update(scale: newScaleFactor)
+        case .ended:
+            zoomFactor = minMaxZoom(newScaleFactor)
+            update(scale: zoomFactor)
+        default:
+            break
+        }
+    }
     
     @IBAction func capturePhotoAction() {
         
@@ -84,9 +221,9 @@ final class CameraViewController: UIViewController {
             case .success(let imageData):
                 self?.showPhotoPreview(with: imageData)
             case .failure(let error):
-                print("Failed to capture image:", error)
+                let message = "Failed to capture image:" + error.localizedDescription
+                self?.showMessage(with: message)
             }
-            
         }
     }
     
@@ -102,7 +239,8 @@ final class CameraViewController: UIViewController {
                 case .success(let videoURL):
                     self?.showVideoPreview(with: videoURL)
                 case .failure(let error):
-                    print("Failed to record video:", error)
+                    let message = "Failed to record video:" + error.localizedDescription
+                    self?.showMessage(with: message)
                 }
             }
         case .ended:
@@ -119,4 +257,3 @@ final class CameraViewController: UIViewController {
         cameraManager.switchCamera()
     }
 }
-

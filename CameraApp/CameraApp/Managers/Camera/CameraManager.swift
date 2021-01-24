@@ -17,29 +17,23 @@ final class CameraManager: NSObject {
 
     // MARK: - Public Properties
     
-    var components: CameraComponents {
-        
-        return cameraConfigureManager.cameraComponents
-    }
-    
     var captureSession: AVCaptureSession {
         
-        return components.captureSession
+        return cameraComponents.captureSession
     }
         
     // MARK: - Private Properties
     
+    private var cameraComponents: CameraComponents = CameraComponents()
     private var cameraActionManager: CameraActionManager!
     private var cameraConfigureManager: CameraConfigureManager!
     private var photoCompletion: PhotoCompletion?
     private var videoCompletion: VideoCompletion?
     
-    
     // MARK: - Public Methods
     
     func prepareCaptureSession() {
         
-        let cameraComponents = CameraComponents()
         cameraActionManager = CameraActionManager(with: cameraComponents)
         cameraConfigureManager = CameraConfigureManager(with: cameraComponents)
         cameraConfigureManager.createCaptureSession()
@@ -91,8 +85,18 @@ final class CameraManager: NSObject {
         
         return cameraActionManager.switchFlashMode()
     }
+    
+    func focus(with focusMode: AVCaptureDevice.FocusMode,
+               exposureMode: AVCaptureDevice.ExposureMode,
+               at texturePoint: CGPoint,
+               monitorSubjectAreaChange: Bool) {
+        
+        cameraConfigureManager.focus(with: focusMode,
+                                     exposureMode: exposureMode,
+                                     at: texturePoint,
+                                     monitorSubjectAreaChange: monitorSubjectAreaChange)
+    }
 }
-
 
 // MARK: - AVCapturePhotoCaptureDelegate
 
@@ -109,7 +113,6 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
         photoCompletion = nil
     }
 }
-
 
 // MARK: - AVCaptureFileOutputRecordingDelegate
 

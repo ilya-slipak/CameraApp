@@ -8,11 +8,11 @@
 
 import AVFoundation
 
-typealias ConfigureCameraCompletion = (SessionSetupResult)
+typealias SessionCameraCompletion = (SessionSetupResult)
 
 final class CameraConfigureManager {
     
-    private var sessionQueue = DispatchQueue(label: "label.session.queue")
+    private var sessionQueue = DispatchQueue(label: "camera.session.queue")
     var cameraComponents: CameraComponents
     
     init(with components: CameraComponents) {
@@ -27,9 +27,8 @@ final class CameraConfigureManager {
     func createCaptureSession() {
         
         checkAccess(for: .video)
-        
         sessionQueue.async {
-            self.performCaptureSessionSetup()
+            self.setupCaptureSession()
         }
     }
     
@@ -48,7 +47,6 @@ final class CameraConfigureManager {
             DispatchQueue.main.async {
                 completion(self.cameraComponents.sessionStatus)
             }
-            
         }
     }
     
@@ -87,10 +85,41 @@ final class CameraConfigureManager {
         return cameraComponents.flashMode
     }
     
+    func focus(with focusMode: AVCaptureDevice.FocusMode,
+               exposureMode: AVCaptureDevice.ExposureMode,
+               at devicePoint: CGPoint,
+               monitorSubjectAreaChange: Bool) {
+        
+        guard let videoDevice = getCurrentCaptureDevice()
+            else {
+                return
+        }
+        
+        sessionQueue.async {
+            
+            do {
+                try videoDevice.lockForConfiguration()
+                if videoDevice.isFocusPointOfInterestSupported && videoDevice.isFocusModeSupported(focusMode) {
+                    videoDevice.focusPointOfInterest = devicePoint
+                    videoDevice.focusMode = focusMode
+                }
+                
+                if videoDevice.isExposurePointOfInterestSupported && videoDevice.isExposureModeSupported(exposureMode) {
+                    videoDevice.exposurePointOfInterest = devicePoint
+                    videoDevice.exposureMode = exposureMode
+                }
+
+                videoDevice.isSubjectAreaChangeMonitoringEnabled = monitorSubjectAreaChange
+                videoDevice.unlockForConfiguration()
+            } catch {
+                print("Could not lock device for configuration: \(error)")
+            }
+        }
+    }
     
     // MARK: - Private Methods
     
-    private func performCaptureSessionSetup() {
+    private func setupCaptureSession() {
         
         guard cameraComponents.sessionStatus == .authorized else {
             return
@@ -106,6 +135,7 @@ final class CameraConfigureManager {
                 cameraComponents.captureSession.sessionPreset = .hd1280x720
             }
         } catch {
+            debugPrint("Error:", error)
             self.cameraComponents.sessionStatus = .configurationFailed
         }
         cameraComponents.captureSession.commitConfiguration()
@@ -117,13 +147,15 @@ final class CameraConfigureManager {
         case .notDetermined:
             sessionQueue.suspend()
             AVCaptureDevice.requestAccess(for: .video) { [weak self] isGranted in
-                if !isGranted {
+                if isGranted {
+                    self?.cameraComponents.sessionStatus = .authorized
+                } else {
                     self?.cameraComponents.sessionStatus = .notAuthorized
                 }
                 self?.sessionQueue.resume()
             }
         case .authorized:
-            return
+            cameraComponents.sessionStatus = .authorized
         default:
             cameraComponents.sessionStatus = .notAuthorized
         }
@@ -131,12 +163,17 @@ final class CameraConfigureManager {
     
     private func configureCaptureDevices() throws {
         
-        let session = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: .video, position: .unspecified)
+        let session = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera],
+                                                       mediaType: .video,
+                                                       position: .unspecified)
         
         let cameras = session.devices.compactMap { $0 }
-        guard !cameras.isEmpty else { throw CameraError.noCamerasAvailable }
+        guard !cameras.isEmpty else {
+            throw CameraError.noCamerasAvailable
+        }
         
         for camera in cameras {
+            
             if camera.position == .front {
                 cameraComponents.frontCamera = camera
             }
@@ -216,7 +253,7 @@ final class CameraConfigureManager {
             cameraComponents.captureSession.addOutput(movieOutput)
         }
     }
-    
+        
     private func setupErrorObserver() {
         
         NotificationCenter.default.addObserver(self,

@@ -11,11 +11,9 @@ import AVFoundation
 
 final class CameraActionManager {
     
-    
     // MARK: - Properties
 
     var cameraComponents: CameraComponents
-    
     
     // MARK: - Public Methods
     
@@ -87,7 +85,8 @@ final class CameraActionManager {
                 }
             }
             
-            guard let videoUrl = StorageManager.shared.getURL(for: .video) else {
+            let fileName = String.makeFilename(contentType: .video)
+            guard let videoUrl = try? VideoStorage.shared.getFileURL(fileName: fileName) else {
                 return
             }
             
@@ -142,7 +141,6 @@ final class CameraActionManager {
         }
         return cameraComponents.flashMode
     }
-    
     
     // MARK: Private Methods
         
