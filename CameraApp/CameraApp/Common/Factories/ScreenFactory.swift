@@ -12,7 +12,7 @@ enum ScreenFactory {
         
     static func makePhotoPreviewScreen(with imageData: Data) -> PreviewPhotoViewController {
         
-        let controller = UIStoryboard.makeController(name: "Main", identifier: "PreviewPhotoViewController") as! PreviewPhotoViewController
+        let controller = PreviewPhotoViewController.instantiateFromStoryboard()
         controller.setup(imageData: imageData)
         
         return controller
@@ -20,7 +20,7 @@ enum ScreenFactory {
     
     static func makeVideoPreviewScreen(with videoURL: URL) -> PreviewVideoViewController {
         
-        let controller = UIStoryboard.makeController(name: "Main", identifier: "PreviewVideoViewController") as! PreviewVideoViewController
+        let controller = PreviewVideoViewController.instantiateFromStoryboard()
         controller.setup(videoURL: videoURL)
         
         return controller

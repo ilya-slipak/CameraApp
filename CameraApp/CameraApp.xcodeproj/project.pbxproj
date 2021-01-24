@@ -23,7 +23,7 @@
 		05A3A14525BDC7590017FDCC /* FileStorageError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A3A14425BDC7590017FDCC /* FileStorageError.swift */; };
 		05A3A14825BDC7EF0017FDCC /* String+Filename.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A3A14725BDC7EF0017FDCC /* String+Filename.swift */; };
 		05A3A14F25BDCA470017FDCC /* ScreenFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A3A14E25BDCA470017FDCC /* ScreenFactory.swift */; };
-		05A3A15225BDCA900017FDCC /* UIStoryboard+MakeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A3A15125BDCA900017FDCC /* UIStoryboard+MakeController.swift */; };
+		05A3A15225BDCA900017FDCC /* UIViewController+MakeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A3A15125BDCA900017FDCC /* UIViewController+MakeController.swift */; };
 		05A3A15D25BDDB5E0017FDCC /* AlertShowable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A3A15C25BDDB5E0017FDCC /* AlertShowable.swift */; };
 		05A3A16125BDDC4C0017FDCC /* SettingsAlertType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A3A16025BDDC4C0017FDCC /* SettingsAlertType.swift */; };
 		05A3A18E25BDE9FA0017FDCC /* FocusSquareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A3A18D25BDE9FA0017FDCC /* FocusSquareView.swift */; };
@@ -55,7 +55,7 @@
 		05A3A14425BDC7590017FDCC /* FileStorageError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileStorageError.swift; sourceTree = "<group>"; };
 		05A3A14725BDC7EF0017FDCC /* String+Filename.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Filename.swift"; sourceTree = "<group>"; };
 		05A3A14E25BDCA470017FDCC /* ScreenFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenFactory.swift; sourceTree = "<group>"; };
-		05A3A15125BDCA900017FDCC /* UIStoryboard+MakeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIStoryboard+MakeController.swift"; sourceTree = "<group>"; };
+		05A3A15125BDCA900017FDCC /* UIViewController+MakeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIViewController+MakeController.swift"; sourceTree = "<group>"; };
 		05A3A15C25BDDB5E0017FDCC /* AlertShowable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertShowable.swift; sourceTree = "<group>"; };
 		05A3A16025BDDC4C0017FDCC /* SettingsAlertType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAlertType.swift; sourceTree = "<group>"; };
 		05A3A18D25BDE9FA0017FDCC /* FocusSquareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusSquareView.swift; sourceTree = "<group>"; };
@@ -98,7 +98,7 @@
 				0506EBC224829FBB005A9D6A /* UIView+MakeFromNib.swift */,
 				05A3A13A25BDC6C80017FDCC /* FileManager+RemoveAll.swift */,
 				05A3A14725BDC7EF0017FDCC /* String+Filename.swift */,
-				05A3A15125BDCA900017FDCC /* UIStoryboard+MakeController.swift */,
+				05A3A15125BDCA900017FDCC /* UIViewController+MakeController.swift */,
 			);
 			path = Extenstions;
 			sourceTree = "<group>";
@@ -347,7 +347,7 @@
 				0506EBBF24829F87005A9D6A /* PlayerView.swift in Sources */,
 				05EB62062471A9C200006BCE /* PreviewView.swift in Sources */,
 				05EB61EB2471A7EF00006BCE /* AppDelegate.swift in Sources */,
-				05A3A15225BDCA900017FDCC /* UIStoryboard+MakeController.swift in Sources */,
+				05A3A15225BDCA900017FDCC /* UIViewController+MakeController.swift in Sources */,
 				05EB62082471AB5300006BCE /* CameraManager.swift in Sources */,
 				0508D01C2482872A00EFCBD7 /* CameraActionManager.swift in Sources */,
 				0506EBBB24829790005A9D6A /* PreviewVideoViewController.swift in Sources */,
