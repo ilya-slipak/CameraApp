@@ -12,31 +12,92 @@ typealias CameraCompletion = (SessionSetupResult) -> Void
 typealias PhotoCompletion = (Result<Data, Error>) -> Void
 typealias VideoCompletion = (Result<URL, Error>) -> Void
 
-final class CameraManager: NSObject {
+protocol CameraManagerProtocol {
     
+    // MARK: - Properties
+    
+    var captureSession: AVCaptureSession { get }
+    
+    // MARK: - Methods
+    
+    func prepareCaptureSession(position: AVCaptureDevice.Position)
+    func startCaptureSession(completion: @escaping CameraCompletion)
+    func stopCaptureSession(completion: @escaping () -> Void)
+    func getCurrentCaptureDevice() -> AVCaptureDevice?
+    func getCurrentFlashMode() -> AVCaptureDevice.FlashMode
+    func captureImage(photoCompletion: @escaping PhotoCompletion)
+    func startRecording(videoCompletion: @escaping VideoCompletion)
+    func stopRecording()
+    func switchCamera()
+    func switchFlashMode() -> AVCaptureDevice.FlashMode
+    func focus(with focusMode: AVCaptureDevice.FocusMode,
+               exposureMode: AVCaptureDevice.ExposureMode,
+               at texturePoint: CGPoint,
+               monitorSubjectAreaChange: Bool)
+}
 
-    // MARK: - Public Properties
+final class CameraManager: NSObject {
+
+    // MARK: - Private Properties
+    
+    private var cameraComponents: CameraComponents = CameraComponents()
+    private var cameraActionManager: CameraActionManagerProtocol!
+    private var cameraConfigureManager: CameraConfigureManagerProtocol!
+    private var photoCompletion: PhotoCompletion?
+    private var videoCompletion: VideoCompletion?
+}
+
+// MARK: - AVCapturePhotoCaptureDelegate
+
+extension CameraManager: AVCapturePhotoCaptureDelegate {
+    
+    func photoOutput(_ output: AVCapturePhotoOutput,
+                     didFinishProcessingPhoto photo: AVCapturePhoto,
+                     error: Error?) {
+        
+        if let error = error {
+            photoCompletion?(.failure(error))
+        } else if let imageData = photo.fileDataRepresentation() {
+            photoCompletion?(.success(imageData))
+        }
+        
+        photoCompletion = nil
+    }
+}
+
+// MARK: - AVCaptureFileOutputRecordingDelegate
+
+extension CameraManager: AVCaptureFileOutputRecordingDelegate {
+    
+    func fileOutput(_ output: AVCaptureFileOutput,
+                    didFinishRecordingTo outputFileURL: URL,
+                    from connections: [AVCaptureConnection],
+                    error: Error?) {
+        
+        if let error = error {
+            videoCompletion?(.failure(error))
+        } else {
+            videoCompletion?(.success(outputFileURL))
+        }
+        
+        videoCompletion = nil
+    }
+}
+
+// MARK: - CameraManagerProtocol
+
+extension CameraManager: CameraManagerProtocol {
     
     var captureSession: AVCaptureSession {
         
         return cameraComponents.captureSession
     }
-        
-    // MARK: - Private Properties
     
-    private var cameraComponents: CameraComponents = CameraComponents()
-    private var cameraActionManager: CameraActionManager!
-    private var cameraConfigureManager: CameraConfigureManager!
-    private var photoCompletion: PhotoCompletion?
-    private var videoCompletion: VideoCompletion?
-    
-    // MARK: - Public Methods
-    
-    func prepareCaptureSession() {
+    func prepareCaptureSession(position: AVCaptureDevice.Position) {
         
         cameraActionManager = CameraActionManager(with: cameraComponents)
         cameraConfigureManager = CameraConfigureManager(with: cameraComponents)
-        cameraConfigureManager.createCaptureSession()
+        cameraConfigureManager.createCaptureSession(position: position)
     }
     
     func startCaptureSession(completion: @escaping CameraCompletion) {
@@ -78,7 +139,7 @@ final class CameraManager: NSObject {
     
     func switchCamera() {
         
-        cameraActionManager.switchCamera()
+        _ = cameraActionManager.switchCamera()
     }
     
     func switchFlashMode() -> AVCaptureDevice.FlashMode {
@@ -95,37 +156,5 @@ final class CameraManager: NSObject {
                                      exposureMode: exposureMode,
                                      at: texturePoint,
                                      monitorSubjectAreaChange: monitorSubjectAreaChange)
-    }
-}
-
-// MARK: - AVCapturePhotoCaptureDelegate
-
-extension CameraManager: AVCapturePhotoCaptureDelegate {
-    
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        
-        if let error = error {
-            photoCompletion?(.failure(error))
-        } else if let imageData = photo.fileDataRepresentation() {
-            photoCompletion?(.success(imageData))
-        }
-        
-        photoCompletion = nil
-    }
-}
-
-// MARK: - AVCaptureFileOutputRecordingDelegate
-
-extension CameraManager: AVCaptureFileOutputRecordingDelegate {
-    
-    func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
-        
-        if let error = error {
-            videoCompletion?(.failure(error))
-        } else {
-            videoCompletion?(.success(outputFileURL))
-        }
-        
-        videoCompletion = nil
     }
 }

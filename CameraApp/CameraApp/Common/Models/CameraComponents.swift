@@ -12,13 +12,20 @@ import AVFoundation
 final class CameraComponents {
     
     var captureSession: AVCaptureSession = AVCaptureSession()
-    var frontCamera: AVCaptureDevice?
-    var frontCameraInput: AVCaptureDeviceInput?
-    var rearCamera: AVCaptureDevice?
-    var rearCameraInput: AVCaptureDeviceInput?
+    var camera: AVCaptureDevice?
+    var cameraInput: AVCaptureDeviceInput?
+    var microphone: AVCaptureDevice?
+    var audioInput: AVCaptureDeviceInput?
     var photoOutput: AVCapturePhotoOutput?
     var movieOutput: AVCaptureMovieFileOutput?
     var currentCameraPosition: CameraPosition?
     var flashMode: AVCaptureDevice.FlashMode = .off
+    var position: AVCaptureDevice.Position = .unspecified
     var sessionStatus: SessionSetupResult = .notAuthorized
+}
+
+struct CameraOrientation {
+    
+    var orientation: AVCaptureVideoOrientation
+    var position: AVCaptureDevice.Position
 }

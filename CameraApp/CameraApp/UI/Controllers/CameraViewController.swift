@@ -20,7 +20,7 @@ final class CameraViewController: UIViewController, AlertShowable {
     // MARK: - Private Properties
     
     private var zoomFactor: CGFloat = 1.0
-    private let cameraManager: CameraManager = CameraManager()
+    private let cameraManager: CameraManagerProtocol = CameraManager()
     
     // MARK: - Lifecycle Methods
     
@@ -50,7 +50,7 @@ final class CameraViewController: UIViewController, AlertShowable {
         cameraButton.layer.cornerRadius = 40
         setupPinchGesture()
         setupTapGesture()
-        cameraManager.prepareCaptureSession()
+        cameraManager.prepareCaptureSession(position: .front)
     }
         
     private func setupPinchGesture() {

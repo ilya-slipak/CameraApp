@@ -10,10 +10,26 @@ import AVFoundation
 
 typealias SessionCameraCompletion = (SessionSetupResult)
 
+protocol CameraConfigureManagerProtocol {
+    
+    func createCaptureSession(position: AVCaptureDevice.Position)
+    func startCaptureSession(completion: @escaping CameraCompletion)
+    func stopCaptureSession(completion: @escaping () -> Void)
+    func getCurrentCaptureDevice() -> AVCaptureDevice?
+    func getCurrenFlashMode() -> AVCaptureDevice.FlashMode
+    func getCurrentCameraPosition() -> AVCaptureDevice.Position
+    func focus(with focusMode: AVCaptureDevice.FocusMode,
+               exposureMode: AVCaptureDevice.ExposureMode,
+               at devicePoint: CGPoint,
+               monitorSubjectAreaChange: Bool)
+}
+
 final class CameraConfigureManager {
     
+    // MARK: - Private Properties
+    
     private var sessionQueue = DispatchQueue(label: "camera.session.queue")
-    var cameraComponents: CameraComponents
+    private var cameraComponents: CameraComponents
     
     init(with components: CameraComponents) {
         
@@ -21,105 +37,9 @@ final class CameraConfigureManager {
         setupErrorObserver()
     }
     
-    
-    // MARK: - Public Methods
-    
-    func createCaptureSession() {
-        
-        checkAccess(for: .video)
-        sessionQueue.async {
-            self.setupCaptureSession()
-        }
-    }
-    
-    func startCaptureSession(completion: @escaping CameraCompletion) {
-        
-        sessionQueue.async {
-            
-            guard self.cameraComponents.sessionStatus == .authorized else {
-                DispatchQueue.main.async {
-                    completion(self.cameraComponents.sessionStatus)
-                }
-                return
-            }
-            
-            self.cameraComponents.captureSession.startRunning()
-            DispatchQueue.main.async {
-                completion(self.cameraComponents.sessionStatus)
-            }
-        }
-    }
-    
-    func stopCaptureSession(completion: @escaping () -> Void) {
-        
-        sessionQueue.async {
-            self.cameraComponents.captureSession.stopRunning()
-            DispatchQueue.main.async {
-                completion()
-            }
-        }
-    }
-        
-    func getCurrentCaptureDevice() -> AVCaptureDevice? {
-        
-        switch cameraComponents.currentCameraPosition {
-        case .front:
-            guard let frontCamera = cameraComponents.frontCamera else {
-                return nil
-            }
-            
-            return frontCamera
-        case .rear:
-            guard let rearCamera = cameraComponents.rearCamera else {
-                return nil
-            }
-            
-            return rearCamera
-        default:
-            return nil
-        }
-    }
-    
-    func getCurrenFlashMode() -> AVCaptureDevice.FlashMode {
-        
-        return cameraComponents.flashMode
-    }
-    
-    func focus(with focusMode: AVCaptureDevice.FocusMode,
-               exposureMode: AVCaptureDevice.ExposureMode,
-               at devicePoint: CGPoint,
-               monitorSubjectAreaChange: Bool) {
-        
-        guard let videoDevice = getCurrentCaptureDevice()
-            else {
-                return
-        }
-        
-        sessionQueue.async {
-            
-            do {
-                try videoDevice.lockForConfiguration()
-                if videoDevice.isFocusPointOfInterestSupported && videoDevice.isFocusModeSupported(focusMode) {
-                    videoDevice.focusPointOfInterest = devicePoint
-                    videoDevice.focusMode = focusMode
-                }
-                
-                if videoDevice.isExposurePointOfInterestSupported && videoDevice.isExposureModeSupported(exposureMode) {
-                    videoDevice.exposurePointOfInterest = devicePoint
-                    videoDevice.exposureMode = exposureMode
-                }
-
-                videoDevice.isSubjectAreaChangeMonitoringEnabled = monitorSubjectAreaChange
-                videoDevice.unlockForConfiguration()
-            } catch {
-                print("Could not lock device for configuration: \(error)")
-            }
-        }
-    }
-    
     // MARK: - Private Methods
     
-    private func setupCaptureSession() {
+    private func setupCaptureSession(position: AVCaptureDevice.Position) {
         
         guard cameraComponents.sessionStatus == .authorized else {
             return
@@ -127,8 +47,8 @@ final class CameraConfigureManager {
         
         do {
             cameraComponents.captureSession.beginConfiguration()
-            try configureCaptureDevices()
-            try configureDeviceInputs()
+            try configureCaptureDevice(position: position)
+            try configureDeviceInput()
             try configurePhotoOutput()
             try configureMovieOutput()
             if cameraComponents.captureSession.canSetSessionPreset(.hd1280x720) {
@@ -161,59 +81,54 @@ final class CameraConfigureManager {
         }
     }
     
-    private func configureCaptureDevices() throws {
+    private func configureCaptureDevice(position: AVCaptureDevice.Position) throws {
         
-        let session = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera],
-                                                       mediaType: .video,
-                                                       position: .unspecified)
-        
-        let cameras = session.devices.compactMap { $0 }
-        guard !cameras.isEmpty else {
-            throw CameraError.noCamerasAvailable
-        }
-        
-        for camera in cameras {
-            
-            if camera.position == .front {
-                cameraComponents.frontCamera = camera
-            }
-            
-            if camera.position == .back {
-                cameraComponents.rearCamera = camera
-                
-                try camera.lockForConfiguration()
-                camera.focusMode = .continuousAutoFocus
-                camera.unlockForConfiguration()
-            }
-        }
+        let camera = try getCamera(position: position)
+        cameraComponents.camera = camera
+        cameraComponents.position = position
     }
     
-    private func configureDeviceInputs() throws {
+    private func getCamera(position: AVCaptureDevice.Position) throws -> AVCaptureDevice {
         
-        if let rearCamera = cameraComponents.rearCamera {
-            cameraComponents.rearCameraInput = try AVCaptureDeviceInput(device: rearCamera)
-            guard let rearCameraInput = cameraComponents.rearCameraInput else {
-                return
-            }
+        let session = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: .video, position: position)
+        
+        let cameras = session.devices.compactMap { $0 }
+        guard
+            !cameras.isEmpty,
+            let camera = cameras.first(where: { $0.position == position }) else {
             
-            if cameraComponents.captureSession.canAddInput(rearCameraInput) {
-                cameraComponents.captureSession.addInput(rearCameraInput)
-            }
-            
-            cameraComponents.currentCameraPosition = .rear
-        } else if let frontCamera = cameraComponents.frontCamera {
-            cameraComponents.frontCameraInput = try AVCaptureDeviceInput(device: frontCamera)
-            guard let frontCameraInput = cameraComponents.frontCameraInput else {
-                return
-            }
-            if cameraComponents.captureSession.canAddInput(frontCameraInput) {
-                cameraComponents.captureSession.addInput(frontCameraInput)
-            } else {
-                throw CameraError.inputsAreInvalid
-            }
-            cameraComponents.currentCameraPosition = .front
-        } else {
             throw CameraError.noCamerasAvailable
+        }
+        
+        try camera.lockForConfiguration()
+        if camera.isFocusModeSupported(.continuousAutoFocus) {
+            camera.focusMode = .continuousAutoFocus
+        }
+        
+        if camera.isExposureModeSupported(.continuousAutoExposure) {
+            camera.exposureMode = .continuousAutoExposure
+        }
+        
+        if camera.isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) {
+            camera.whiteBalanceMode = .continuousAutoWhiteBalance
+        }
+        
+        camera.unlockForConfiguration()
+        
+        return camera
+    }
+    
+    private func configureDeviceInput() throws {
+        
+        if let camera = cameraComponents.camera {
+            cameraComponents.cameraInput = try AVCaptureDeviceInput(device: camera)
+            
+            guard
+                let cameraInput = cameraComponents.cameraInput,
+                cameraComponents.captureSession.canAddInput(cameraInput) else {
+                return
+            }
+            cameraComponents.captureSession.addInput(cameraInput)
         }
     }
     
@@ -277,6 +192,94 @@ final class CameraConfigureManager {
                 if !self.cameraComponents.captureSession.isRunning {
                     self.cameraComponents.captureSession.startRunning()
                 }
+            }
+        }
+    }
+}
+
+// MARK: - CameraConfigureManagerProtocol
+
+extension CameraConfigureManager: CameraConfigureManagerProtocol {
+    
+    func createCaptureSession(position: AVCaptureDevice.Position) {
+        
+        checkAccess(for: .video)
+        sessionQueue.async {
+            self.setupCaptureSession(position: position)
+        }
+    }
+    
+    func startCaptureSession(completion: @escaping CameraCompletion) {
+        
+        sessionQueue.async {
+            
+            guard self.cameraComponents.sessionStatus == .authorized else {
+                DispatchQueue.main.async {
+                    completion(self.cameraComponents.sessionStatus)
+                }
+                return
+            }
+            
+            self.cameraComponents.captureSession.startRunning()
+            DispatchQueue.main.async {
+                completion(self.cameraComponents.sessionStatus)
+            }
+        }
+    }
+    
+    func stopCaptureSession(completion: @escaping () -> Void) {
+        
+        sessionQueue.async {
+            self.cameraComponents.captureSession.stopRunning()
+            DispatchQueue.main.async {
+                completion()
+            }
+        }
+    }
+            
+    func getCurrentCaptureDevice() -> AVCaptureDevice? {
+        
+        return cameraComponents.camera
+    }
+    
+    func getCurrenFlashMode() -> AVCaptureDevice.FlashMode {
+        
+        return cameraComponents.flashMode
+    }
+    
+    func getCurrentCameraPosition() -> AVCaptureDevice.Position {
+        
+        return cameraComponents.position
+    }
+        
+    func focus(with focusMode: AVCaptureDevice.FocusMode,
+               exposureMode: AVCaptureDevice.ExposureMode,
+               at devicePoint: CGPoint,
+               monitorSubjectAreaChange: Bool) {
+        
+        guard let videoDevice = getCurrentCaptureDevice()
+            else {
+                return
+        }
+        
+        sessionQueue.async {
+            
+            do {
+                try videoDevice.lockForConfiguration()
+                if videoDevice.isFocusPointOfInterestSupported && videoDevice.isFocusModeSupported(focusMode) {
+                    videoDevice.focusPointOfInterest = devicePoint
+                    videoDevice.focusMode = focusMode
+                }
+                
+                if videoDevice.isExposurePointOfInterestSupported && videoDevice.isExposureModeSupported(exposureMode) {
+                    videoDevice.exposurePointOfInterest = devicePoint
+                    videoDevice.exposureMode = exposureMode
+                }
+
+                videoDevice.isSubjectAreaChangeMonitoringEnabled = monitorSubjectAreaChange
+                videoDevice.unlockForConfiguration()
+            } catch {
+                print("Could not lock device for configuration: \(error)")
             }
         }
     }

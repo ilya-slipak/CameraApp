@@ -9,30 +9,110 @@
 import UIKit
 import AVFoundation
 
+protocol CameraActionManagerProtocol {
+    
+    func captureImage(delegate: AVCapturePhotoCaptureDelegate)
+    func startRecording(delegate: AVCaptureFileOutputRecordingDelegate)
+    func stopRecording()
+    func switchFlashMode() -> AVCaptureDevice.FlashMode
+    func switchCamera() -> CameraOrientation
+}
+
 final class CameraActionManager {
     
-    // MARK: - Properties
+    // MARK: - Private Properties
 
-    var cameraComponents: CameraComponents
+    private var cameraComponents: CameraComponents
     
-    // MARK: - Public Methods
+    // MARK: - Lifecycle Methods
     
     init(with components: CameraComponents) {
         
         cameraComponents = components
     }
-    
-    func captureImage(delegate: AVCapturePhotoCaptureDelegate) {
         
-        var settings: AVCapturePhotoSettings
-        switch cameraComponents.currentCameraPosition {
-        case .rear:
-            settings = AVCapturePhotoSettings()
-            settings.flashMode = cameraComponents.flashMode
-        default:
-            settings = AVCapturePhotoSettings()
+    // MARK: Private Methods
+        
+    private func switchCamera(to position: AVCaptureDevice.Position) throws {
+        
+        guard let cameraInput = cameraComponents.cameraInput else {
+            throw CameraError.invalidOperation
         }
         
+        cameraComponents.captureSession.beginConfiguration()
+        cameraComponents.captureSession.removeInput(cameraInput)
+        
+        let newCamera = try getCamera(position: position)
+        let newCameraInput = try AVCaptureDeviceInput(device: newCamera)
+        if cameraComponents.captureSession.canAddInput(newCameraInput) {
+            cameraComponents.captureSession.addInput(newCameraInput)
+            cameraComponents.position = position
+            cameraComponents.cameraInput = cameraInput
+            cameraComponents.camera = newCamera
+        }
+        cameraComponents.captureSession.commitConfiguration()
+    }
+    //TODO: Refactor me
+    private func getCamera(position: AVCaptureDevice.Position) throws -> AVCaptureDevice {
+        
+        let session = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera],
+                                                       mediaType: .video,
+                                                       position: position)
+        
+        let cameras = session.devices.compactMap { $0 }
+        guard
+            !cameras.isEmpty,
+            let camera = cameras.first else {
+            
+            throw CameraError.noCamerasAvailable
+        }
+        
+        try camera.lockForConfiguration()
+        if camera.isFocusModeSupported(.continuousAutoFocus) {
+            camera.focusMode = .continuousAutoFocus
+        }
+        
+        if camera.isExposureModeSupported(.continuousAutoExposure) {
+            camera.exposureMode = .continuousAutoExposure
+        }
+        
+        if camera.isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) {
+            camera.whiteBalanceMode = .continuousAutoWhiteBalance
+        }
+        
+        camera.unlockForConfiguration()
+        
+        return camera
+    }
+    
+    //TODO: Will be added soon
+    private func currentVideoOrientation() -> AVCaptureVideoOrientation {
+        
+        var orientation: AVCaptureVideoOrientation
+        
+        switch UIDevice.current.orientation {
+        case .portrait:
+            orientation = AVCaptureVideoOrientation.portrait
+        case .landscapeRight:
+            orientation = AVCaptureVideoOrientation.landscapeLeft
+        case .portraitUpsideDown:
+            orientation = AVCaptureVideoOrientation.portraitUpsideDown
+        default:
+            orientation = AVCaptureVideoOrientation.landscapeRight
+        }
+        
+        return orientation
+    }
+}
+
+// MARK: - CameraActionManagerProtocol
+
+extension CameraActionManager: CameraActionManagerProtocol {
+
+    func captureImage(delegate: AVCapturePhotoCaptureDelegate) {
+        
+        let settings = AVCapturePhotoSettings()
+        settings.flashMode = cameraComponents.flashMode
         cameraComponents.photoOutput?.capturePhoto(with: settings, delegate: delegate)
     }
     
@@ -58,23 +138,12 @@ final class CameraActionManager {
             
             var device: AVCaptureDevice
             
-            switch cameraComponents.currentCameraPosition {
-            case .front:
-                guard  let frontCameraInput = cameraComponents.frontCameraInput else {
-                    return
-                }
-                
-                device = frontCameraInput.device
-            case .rear:
-                guard  let rearCameraInput = cameraComponents.rearCameraInput else {
-                    return
-                }
-                
-                device = rearCameraInput.device
-            default:
+            guard  let frontCameraInput = cameraComponents.cameraInput else {
                 return
             }
             
+            device = frontCameraInput.device
+                        
             if device.isSmoothAutoFocusSupported {
                 do {
                     try device.lockForConfiguration()
@@ -102,29 +171,33 @@ final class CameraActionManager {
             return
         }
         
-        if movieOutput.isRecording == true {
+        if movieOutput.isRecording {
             movieOutput.stopRecording()
         }
     }
         
-    func switchCamera() {
+    func switchCamera() -> CameraOrientation {
         
         cameraComponents.captureSession.beginConfiguration()
-        
+        var cameraOrientation = CameraOrientation(orientation: .portrait, position: .unspecified)
         do {
-            switch cameraComponents.currentCameraPosition {
+            
+            switch cameraComponents.position {
             case .front:
-                try switchToRearCamera()
-            case .rear:
-                try switchToFrontCamera()
-            case .none:
+                try switchCamera(to: .back)
+            case .back:
+                try switchCamera(to: .front)
+            default:
                 break
             }
-            
-            cameraComponents.captureSession.commitConfiguration()
         } catch {
             print("Failed to switch camera:", error.localizedDescription)
         }
+        
+        cameraOrientation.position = cameraComponents.position
+        cameraComponents.captureSession.commitConfiguration()
+        
+        return cameraOrientation
     }
     
     func switchFlashMode() -> AVCaptureDevice.FlashMode {
@@ -140,74 +213,5 @@ final class CameraActionManager {
             break
         }
         return cameraComponents.flashMode
-    }
-    
-    // MARK: Private Methods
-        
-    private func switchToFrontCamera() throws {
-        
-        guard
-            let rearCameraInput = cameraComponents.rearCameraInput, cameraComponents.captureSession.inputs.contains(rearCameraInput),
-            let frontCamera = cameraComponents.frontCamera else { throw CameraError.invalidOperation }
-        
-        cameraComponents.frontCameraInput = try AVCaptureDeviceInput(device: frontCamera)
-        
-        guard let frontCameraInput = cameraComponents.frontCameraInput else {
-            return
-        }
-        
-        cameraComponents.captureSession.removeInput(rearCameraInput)
-        
-        if cameraComponents.captureSession.canAddInput(frontCameraInput) {
-            cameraComponents.captureSession.addInput(frontCameraInput)
-            
-            cameraComponents.currentCameraPosition = .front
-        } else {
-            throw CameraError.invalidOperation
-        }
-    }
-    
-    private func switchToRearCamera() throws {
-        
-        guard
-            let frontCameraInput = cameraComponents.frontCameraInput, cameraComponents.captureSession.inputs.contains(frontCameraInput),
-            let rearCamera = cameraComponents.rearCamera else {
-                throw CameraError.invalidOperation
-        }
-        
-        cameraComponents.rearCameraInput = try AVCaptureDeviceInput(device: rearCamera)
-        
-        guard let rearCameraInput = cameraComponents.rearCameraInput else {
-            return
-        }
-        
-        cameraComponents.captureSession.removeInput(frontCameraInput)
-        
-        if cameraComponents.captureSession.canAddInput(rearCameraInput) {
-            cameraComponents.captureSession.addInput(rearCameraInput)
-            
-            cameraComponents.currentCameraPosition = .rear
-        } else {
-            throw CameraError.invalidOperation
-        }
-    }
-    
-    //TODO: Will be added soon
-    private func currentVideoOrientation() -> AVCaptureVideoOrientation {
-        
-        var orientation: AVCaptureVideoOrientation
-        
-        switch UIDevice.current.orientation {
-        case .portrait:
-            orientation = AVCaptureVideoOrientation.portrait
-        case .landscapeRight:
-            orientation = AVCaptureVideoOrientation.landscapeLeft
-        case .portraitUpsideDown:
-            orientation = AVCaptureVideoOrientation.portraitUpsideDown
-        default:
-            orientation = AVCaptureVideoOrientation.landscapeRight
-        }
-        
-        return orientation
     }
 }

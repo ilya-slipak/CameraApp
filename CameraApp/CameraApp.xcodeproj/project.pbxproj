@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		05065AB625C2EBCB00BC3D3E /* CameraManagerrr.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05065AB525C2EBCB00BC3D3E /* CameraManagerrr.swift */; };
 		0506EBB724828F17005A9D6A /* CameraConfigureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0506EBB624828F17005A9D6A /* CameraConfigureManager.swift */; };
 		0506EBB92482977B005A9D6A /* PreviewPhotoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0506EBB82482977B005A9D6A /* PreviewPhotoViewController.swift */; };
 		0506EBBB24829790005A9D6A /* PreviewVideoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0506EBBA24829790005A9D6A /* PreviewVideoViewController.swift */; };
@@ -39,6 +40,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		05065AB525C2EBCB00BC3D3E /* CameraManagerrr.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManagerrr.swift; sourceTree = "<group>"; };
 		0506EBB624828F17005A9D6A /* CameraConfigureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraConfigureManager.swift; sourceTree = "<group>"; };
 		0506EBB82482977B005A9D6A /* PreviewPhotoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewPhotoViewController.swift; sourceTree = "<group>"; };
 		0506EBBA24829790005A9D6A /* PreviewVideoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewVideoViewController.swift; sourceTree = "<group>"; };
@@ -109,6 +111,7 @@
 				05EB62072471AB5300006BCE /* CameraManager.swift */,
 				0508D01B2482872A00EFCBD7 /* CameraActionManager.swift */,
 				0506EBB624828F17005A9D6A /* CameraConfigureManager.swift */,
+				05065AB525C2EBCB00BC3D3E /* CameraManagerrr.swift */,
 			);
 			path = Camera;
 			sourceTree = "<group>";
@@ -358,6 +361,7 @@
 				05A3A14525BDC7590017FDCC /* FileStorageError.swift in Sources */,
 				0506EBB724828F17005A9D6A /* CameraConfigureManager.swift in Sources */,
 				05A3A14125BDC6DF0017FDCC /* VideoStorage.swift in Sources */,
+				05065AB625C2EBCB00BC3D3E /* CameraManagerrr.swift in Sources */,
 				05A3A16125BDDC4C0017FDCC /* SettingsAlertType.swift in Sources */,
 				05A3A15D25BDDB5E0017FDCC /* AlertShowable.swift in Sources */,
 				0508D019248285AD00EFCBD7 /* ContentType.swift in Sources */,
