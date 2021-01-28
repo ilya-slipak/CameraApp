@@ -12,7 +12,6 @@ import AVFoundation
 final class CameraComponents {
     
     var captureSession: AVCaptureSession = AVCaptureSession()
-    var camera: AVCaptureDevice?
     var cameraInput: AVCaptureDeviceInput?
     var microphone: AVCaptureDevice?
     var audioInput: AVCaptureDeviceInput?

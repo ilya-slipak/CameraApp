@@ -9,19 +9,10 @@
 import UIKit
 import AVFoundation
 
-protocol CameraActionManagerProtocol {
-    
-    func captureImage(delegate: AVCapturePhotoCaptureDelegate)
-    func startRecording(delegate: AVCaptureFileOutputRecordingDelegate)
-    func stopRecording()
-    func switchFlashMode() -> AVCaptureDevice.FlashMode
-    func switchCamera() -> CameraOrientation
-}
-
-final class CameraActionManager {
+final class CameraActionManager: CameraRecivable {
     
     // MARK: - Private Properties
-
+    
     private var cameraComponents: CameraComponents
     
     // MARK: - Lifecycle Methods
@@ -30,59 +21,25 @@ final class CameraActionManager {
         
         cameraComponents = components
     }
-        
+    
     // MARK: Private Methods
-        
+    
     private func switchCamera(to position: AVCaptureDevice.Position) throws {
         
-        guard let cameraInput = cameraComponents.cameraInput else {
+        guard let oldCameraInput = cameraComponents.cameraInput else {
             throw CameraError.invalidOperation
         }
-        
+        let newCameraDevice = try getCamera(position: position)
         cameraComponents.captureSession.beginConfiguration()
-        cameraComponents.captureSession.removeInput(cameraInput)
+        cameraComponents.captureSession.removeInput(oldCameraInput)
         
-        let newCamera = try getCamera(position: position)
-        let newCameraInput = try AVCaptureDeviceInput(device: newCamera)
+        let newCameraInput = try AVCaptureDeviceInput(device: newCameraDevice)
         if cameraComponents.captureSession.canAddInput(newCameraInput) {
             cameraComponents.captureSession.addInput(newCameraInput)
             cameraComponents.position = position
-            cameraComponents.cameraInput = cameraInput
-            cameraComponents.camera = newCamera
+            cameraComponents.cameraInput = newCameraInput
         }
         cameraComponents.captureSession.commitConfiguration()
-    }
-    //TODO: Refactor me
-    private func getCamera(position: AVCaptureDevice.Position) throws -> AVCaptureDevice {
-        
-        let session = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera],
-                                                       mediaType: .video,
-                                                       position: position)
-        
-        let cameras = session.devices.compactMap { $0 }
-        guard
-            !cameras.isEmpty,
-            let camera = cameras.first else {
-            
-            throw CameraError.noCamerasAvailable
-        }
-        
-        try camera.lockForConfiguration()
-        if camera.isFocusModeSupported(.continuousAutoFocus) {
-            camera.focusMode = .continuousAutoFocus
-        }
-        
-        if camera.isExposureModeSupported(.continuousAutoExposure) {
-            camera.exposureMode = .continuousAutoExposure
-        }
-        
-        if camera.isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) {
-            camera.whiteBalanceMode = .continuousAutoWhiteBalance
-        }
-        
-        camera.unlockForConfiguration()
-        
-        return camera
     }
     
     //TODO: Will be added soon
@@ -108,7 +65,7 @@ final class CameraActionManager {
 // MARK: - CameraActionManagerProtocol
 
 extension CameraActionManager: CameraActionManagerProtocol {
-
+    
     func captureImage(delegate: AVCapturePhotoCaptureDelegate) {
         
         let settings = AVCapturePhotoSettings()
@@ -117,7 +74,7 @@ extension CameraActionManager: CameraActionManagerProtocol {
     }
     
     func startRecording(delegate: AVCaptureFileOutputRecordingDelegate) {
-
+        
         guard let movieOutput = cameraComponents.movieOutput else {
             return
         }
@@ -143,7 +100,7 @@ extension CameraActionManager: CameraActionManagerProtocol {
             }
             
             device = frontCameraInput.device
-                        
+            
             if device.isSmoothAutoFocusSupported {
                 do {
                     try device.lockForConfiguration()
@@ -175,10 +132,9 @@ extension CameraActionManager: CameraActionManagerProtocol {
             movieOutput.stopRecording()
         }
     }
-        
+    
     func switchCamera() -> CameraOrientation {
         
-        cameraComponents.captureSession.beginConfiguration()
         var cameraOrientation = CameraOrientation(orientation: .portrait, position: .unspecified)
         do {
             
@@ -195,7 +151,6 @@ extension CameraActionManager: CameraActionManagerProtocol {
         }
         
         cameraOrientation.position = cameraComponents.position
-        cameraComponents.captureSession.commitConfiguration()
         
         return cameraOrientation
     }

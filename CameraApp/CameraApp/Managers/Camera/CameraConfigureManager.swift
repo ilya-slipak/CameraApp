@@ -15,7 +15,6 @@ protocol CameraConfigureManagerProtocol {
     func createCaptureSession(position: AVCaptureDevice.Position)
     func startCaptureSession(completion: @escaping CameraCompletion)
     func stopCaptureSession(completion: @escaping () -> Void)
-    func getCurrentCaptureDevice() -> AVCaptureDevice?
     func getCurrenFlashMode() -> AVCaptureDevice.FlashMode
     func getCurrentCameraPosition() -> AVCaptureDevice.Position
     func focus(with focusMode: AVCaptureDevice.FocusMode,
@@ -24,7 +23,7 @@ protocol CameraConfigureManagerProtocol {
                monitorSubjectAreaChange: Bool)
 }
 
-final class CameraConfigureManager {
+final class CameraConfigureManager: CameraRecivable {
     
     // MARK: - Private Properties
     
@@ -47,8 +46,8 @@ final class CameraConfigureManager {
         
         do {
             cameraComponents.captureSession.beginConfiguration()
-            try configureCaptureDevice(position: position)
-            try configureDeviceInput()
+            let camera =  try configureCaptureDevice(position: position)
+            try configureDeviceInput(cameraDevice: camera)
             try configurePhotoOutput()
             try configureMovieOutput()
             if cameraComponents.captureSession.canSetSessionPreset(.hd1280x720) {
@@ -60,7 +59,7 @@ final class CameraConfigureManager {
         }
         cameraComponents.captureSession.commitConfiguration()
     }
-        
+    
     private func checkAccess(for mediaType: AVMediaType) {
         
         switch AVCaptureDevice.authorizationStatus(for: mediaType) {
@@ -81,55 +80,22 @@ final class CameraConfigureManager {
         }
     }
     
-    private func configureCaptureDevice(position: AVCaptureDevice.Position) throws {
+    private func configureCaptureDevice(position: AVCaptureDevice.Position) throws -> AVCaptureDevice {
         
-        let camera = try getCamera(position: position)
-        cameraComponents.camera = camera
         cameraComponents.position = position
+        return try getCamera(position: position)
     }
     
-    private func getCamera(position: AVCaptureDevice.Position) throws -> AVCaptureDevice {
+    private func configureDeviceInput(cameraDevice: AVCaptureDevice) throws {
         
-        let session = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: .video, position: position)
+        cameraComponents.cameraInput = try AVCaptureDeviceInput(device: cameraDevice)
         
-        let cameras = session.devices.compactMap { $0 }
         guard
-            !cameras.isEmpty,
-            let camera = cameras.first(where: { $0.position == position }) else {
-            
-            throw CameraError.noCamerasAvailable
+            let cameraInput = cameraComponents.cameraInput,
+            cameraComponents.captureSession.canAddInput(cameraInput) else {
+            return
         }
-        
-        try camera.lockForConfiguration()
-        if camera.isFocusModeSupported(.continuousAutoFocus) {
-            camera.focusMode = .continuousAutoFocus
-        }
-        
-        if camera.isExposureModeSupported(.continuousAutoExposure) {
-            camera.exposureMode = .continuousAutoExposure
-        }
-        
-        if camera.isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) {
-            camera.whiteBalanceMode = .continuousAutoWhiteBalance
-        }
-        
-        camera.unlockForConfiguration()
-        
-        return camera
-    }
-    
-    private func configureDeviceInput() throws {
-        
-        if let camera = cameraComponents.camera {
-            cameraComponents.cameraInput = try AVCaptureDeviceInput(device: camera)
-            
-            guard
-                let cameraInput = cameraComponents.cameraInput,
-                cameraComponents.captureSession.canAddInput(cameraInput) else {
-                return
-            }
-            cameraComponents.captureSession.addInput(cameraInput)
-        }
+        cameraComponents.captureSession.addInput(cameraInput)
     }
     
     private func configurePhotoOutput() throws {
@@ -168,7 +134,7 @@ final class CameraConfigureManager {
             cameraComponents.captureSession.addOutput(movieOutput)
         }
     }
-        
+    
     private func setupErrorObserver() {
         
         NotificationCenter.default.addObserver(self,
@@ -236,11 +202,6 @@ extension CameraConfigureManager: CameraConfigureManagerProtocol {
             }
         }
     }
-            
-    func getCurrentCaptureDevice() -> AVCaptureDevice? {
-        
-        return cameraComponents.camera
-    }
     
     func getCurrenFlashMode() -> AVCaptureDevice.FlashMode {
         
@@ -251,15 +212,15 @@ extension CameraConfigureManager: CameraConfigureManagerProtocol {
         
         return cameraComponents.position
     }
-        
+    
     func focus(with focusMode: AVCaptureDevice.FocusMode,
                exposureMode: AVCaptureDevice.ExposureMode,
                at devicePoint: CGPoint,
                monitorSubjectAreaChange: Bool) {
         
-        guard let videoDevice = getCurrentCaptureDevice()
-            else {
-                return
+        guard let videoDevice = cameraComponents.cameraInput?.device
+        else {
+            return
         }
         
         sessionQueue.async {
@@ -275,7 +236,7 @@ extension CameraConfigureManager: CameraConfigureManagerProtocol {
                     videoDevice.exposurePointOfInterest = devicePoint
                     videoDevice.exposureMode = exposureMode
                 }
-
+                
                 videoDevice.isSubjectAreaChangeMonitoringEnabled = monitorSubjectAreaChange
                 videoDevice.unlockForConfiguration()
             } catch {

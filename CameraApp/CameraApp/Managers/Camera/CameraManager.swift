@@ -12,37 +12,13 @@ typealias CameraCompletion = (SessionSetupResult) -> Void
 typealias PhotoCompletion = (Result<Data, Error>) -> Void
 typealias VideoCompletion = (Result<URL, Error>) -> Void
 
-protocol CameraManagerProtocol {
-    
-    // MARK: - Properties
-    
-    var captureSession: AVCaptureSession { get }
-    
-    // MARK: - Methods
-    
-    func prepareCaptureSession(position: AVCaptureDevice.Position)
-    func startCaptureSession(completion: @escaping CameraCompletion)
-    func stopCaptureSession(completion: @escaping () -> Void)
-    func getCurrentCaptureDevice() -> AVCaptureDevice?
-    func getCurrentFlashMode() -> AVCaptureDevice.FlashMode
-    func captureImage(photoCompletion: @escaping PhotoCompletion)
-    func startRecording(videoCompletion: @escaping VideoCompletion)
-    func stopRecording()
-    func switchCamera()
-    func switchFlashMode() -> AVCaptureDevice.FlashMode
-    func focus(with focusMode: AVCaptureDevice.FocusMode,
-               exposureMode: AVCaptureDevice.ExposureMode,
-               at texturePoint: CGPoint,
-               monitorSubjectAreaChange: Bool)
-}
-
 final class CameraManager: NSObject {
-
+    
     // MARK: - Private Properties
     
     private var cameraComponents: CameraComponents = CameraComponents()
     private var cameraActionManager: CameraActionManagerProtocol!
-    private var cameraConfigureManager: CameraConfigureManagerProtocol!
+    private var cameraConfigureManager: (CameraConfigureManagerProtocol & CameraRecivable)!
     private var photoCompletion: PhotoCompletion?
     private var videoCompletion: VideoCompletion?
 }
@@ -112,7 +88,7 @@ extension CameraManager: CameraManagerProtocol {
     
     func getCurrentCaptureDevice() -> AVCaptureDevice? {
         
-        return cameraConfigureManager.getCurrentCaptureDevice()
+        return try? cameraConfigureManager.getCamera(position: cameraComponents.position)
     }
     
     func getCurrentFlashMode() -> AVCaptureDevice.FlashMode {
