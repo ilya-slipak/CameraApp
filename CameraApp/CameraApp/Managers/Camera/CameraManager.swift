@@ -18,7 +18,7 @@ final class CameraManager: NSObject {
     
     private var cameraComponents: CameraComponents = CameraComponents()
     private var cameraActionManager: CameraActionManagerProtocol!
-    private var cameraConfigureManager: (CameraConfigureManagerProtocol & CameraRecivable)!
+    private var cameraConfigureManager: (CameraConfigureManagerProtocol & CameraConfigurable)!
     private var photoCompletion: PhotoCompletion?
     private var videoCompletion: VideoCompletion?
 }

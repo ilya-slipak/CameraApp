@@ -9,7 +9,7 @@
 import UIKit
 import AVFoundation
 
-final class CameraActionManager: CameraRecivable {
+final class CameraActionManager: CameraConfigurable {
     
     // MARK: - Private Properties
     
@@ -32,33 +32,9 @@ final class CameraActionManager: CameraRecivable {
         let newCameraDevice = try getCamera(position: position)
         cameraComponents.captureSession.beginConfiguration()
         cameraComponents.captureSession.removeInput(oldCameraInput)
-        
-        let newCameraInput = try AVCaptureDeviceInput(device: newCameraDevice)
-        if cameraComponents.captureSession.canAddInput(newCameraInput) {
-            cameraComponents.captureSession.addInput(newCameraInput)
-            cameraComponents.position = position
-            cameraComponents.cameraInput = newCameraInput
-        }
+        try configureDeviceInput(cameraDevice: newCameraDevice, cameraComponents: cameraComponents)
+        cameraComponents.position = position
         cameraComponents.captureSession.commitConfiguration()
-    }
-    
-    //TODO: Will be added soon
-    private func currentVideoOrientation() -> AVCaptureVideoOrientation {
-        
-        var orientation: AVCaptureVideoOrientation
-        
-        switch UIDevice.current.orientation {
-        case .portrait:
-            orientation = AVCaptureVideoOrientation.portrait
-        case .landscapeRight:
-            orientation = AVCaptureVideoOrientation.landscapeLeft
-        case .portraitUpsideDown:
-            orientation = AVCaptureVideoOrientation.portraitUpsideDown
-        default:
-            orientation = AVCaptureVideoOrientation.landscapeRight
-        }
-        
-        return orientation
     }
 }
 
@@ -107,7 +83,7 @@ extension CameraActionManager: CameraActionManagerProtocol {
                     device.isSmoothAutoFocusEnabled = false
                     device.unlockForConfiguration()
                 } catch {
-                    print("Error setiing configuration: \(error)")
+                    print("Error during setup device configuration: \(error)")
                 }
             }
             

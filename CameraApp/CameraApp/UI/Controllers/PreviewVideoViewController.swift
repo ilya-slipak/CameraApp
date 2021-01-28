@@ -36,6 +36,10 @@ final class PreviewVideoViewController: UIViewController {
         playerView.stopPlaying()
     }
     
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
+    }
+    
     @IBAction func closeAction(_ sender: UIButton) {
         
         dismiss(animated: false)

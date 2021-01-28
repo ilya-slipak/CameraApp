@@ -9,11 +9,11 @@
 import Foundation
 import AVFoundation
 
-protocol CameraRecivable {
+protocol CameraConfigurable {
     
 }
 
-extension CameraRecivable {
+extension CameraConfigurable {
     
     func getCamera(position: AVCaptureDevice.Position) throws -> AVCaptureDevice {
         
@@ -42,5 +42,18 @@ extension CameraRecivable {
         camera.unlockForConfiguration()
         
         return camera
+    }
+    
+    func configureDeviceInput(cameraDevice: AVCaptureDevice,
+                                      cameraComponents: CameraComponents) throws {
+        
+        cameraComponents.cameraInput = try AVCaptureDeviceInput(device: cameraDevice)
+        
+        guard
+            let cameraInput = cameraComponents.cameraInput,
+            cameraComponents.captureSession.canAddInput(cameraInput) else {
+            return
+        }
+        cameraComponents.captureSession.addInput(cameraInput)
     }
 }

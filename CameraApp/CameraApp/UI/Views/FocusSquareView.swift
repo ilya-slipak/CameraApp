@@ -12,9 +12,9 @@ final class FocusSquareView: UIView {
     
     lazy var imageView: UIImageView = {
         
-        let imageView = UIImageView(frame: CGRect(x: 0, y: 0, width: 20, height: 20))
+        let imageView = UIImageView(frame: CGRect(x: 0, y: 0, width: 44, height: 44))
         imageView.contentMode = .scaleAspectFit
-        imageView.image = UIImage(named: "focusSquareIcon")
+        imageView.image = UIImage(named: "focusIcon")
         imageView.translatesAutoresizingMaskIntoConstraints = false
         
         return imageView
@@ -32,14 +32,12 @@ final class FocusSquareView: UIView {
     
     private func setup() {
         
-        layer.borderWidth = 2
-        layer.borderColor = UIColor.white.cgColor
-        
+        backgroundColor = .clear
         addSubview(imageView)
         
         NSLayoutConstraint.activate([
-            imageView.centerYAnchor.constraint(equalTo: self.centerYAnchor),
-            imageView.centerXAnchor.constraint(equalTo: self.centerXAnchor)
+            imageView.centerYAnchor.constraint(equalTo: centerYAnchor),
+            imageView.centerXAnchor.constraint(equalTo: centerXAnchor)
         ])
     }
     

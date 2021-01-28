@@ -13,7 +13,6 @@ final class CameraComponents {
     
     var captureSession: AVCaptureSession = AVCaptureSession()
     var cameraInput: AVCaptureDeviceInput?
-    var microphone: AVCaptureDevice?
     var audioInput: AVCaptureDeviceInput?
     var photoOutput: AVCapturePhotoOutput?
     var movieOutput: AVCaptureMovieFileOutput?

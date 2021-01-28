@@ -9,26 +9,15 @@
 import Foundation
 import AVFoundation
 
-protocol CameraManagerProtocol {
+protocol CameraConfigureManagerProtocol {
     
-    // MARK: - Properties
-    
-    var captureSession: AVCaptureSession { get }
-    
-    // MARK: - Methods
-    
-    func prepareCaptureSession(position: AVCaptureDevice.Position)
+    func createCaptureSession(position: AVCaptureDevice.Position)
     func startCaptureSession(completion: @escaping CameraCompletion)
     func stopCaptureSession(completion: @escaping () -> Void)
-    func getCurrentCaptureDevice() -> AVCaptureDevice?
-    func getCurrentFlashMode() -> AVCaptureDevice.FlashMode
-    func captureImage(photoCompletion: @escaping PhotoCompletion)
-    func startRecording(videoCompletion: @escaping VideoCompletion)
-    func stopRecording()
-    func switchCamera()
-    func switchFlashMode() -> AVCaptureDevice.FlashMode
+    func getCurrenFlashMode() -> AVCaptureDevice.FlashMode
+    func getCurrentCameraPosition() -> AVCaptureDevice.Position
     func focus(with focusMode: AVCaptureDevice.FocusMode,
                exposureMode: AVCaptureDevice.ExposureMode,
-               at texturePoint: CGPoint,
+               at devicePoint: CGPoint,
                monitorSubjectAreaChange: Bool)
 }

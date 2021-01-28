@@ -10,20 +10,7 @@ import AVFoundation
 
 typealias SessionCameraCompletion = (SessionSetupResult)
 
-protocol CameraConfigureManagerProtocol {
-    
-    func createCaptureSession(position: AVCaptureDevice.Position)
-    func startCaptureSession(completion: @escaping CameraCompletion)
-    func stopCaptureSession(completion: @escaping () -> Void)
-    func getCurrenFlashMode() -> AVCaptureDevice.FlashMode
-    func getCurrentCameraPosition() -> AVCaptureDevice.Position
-    func focus(with focusMode: AVCaptureDevice.FocusMode,
-               exposureMode: AVCaptureDevice.ExposureMode,
-               at devicePoint: CGPoint,
-               monitorSubjectAreaChange: Bool)
-}
-
-final class CameraConfigureManager: CameraRecivable {
+final class CameraConfigureManager: CameraConfigurable {
     
     // MARK: - Private Properties
     
@@ -47,7 +34,7 @@ final class CameraConfigureManager: CameraRecivable {
         do {
             cameraComponents.captureSession.beginConfiguration()
             let camera =  try configureCaptureDevice(position: position)
-            try configureDeviceInput(cameraDevice: camera)
+            try configureDeviceInput(cameraDevice: camera, cameraComponents: cameraComponents)
             try configurePhotoOutput()
             try configureMovieOutput()
             if cameraComponents.captureSession.canSetSessionPreset(.hd1280x720) {
@@ -85,19 +72,7 @@ final class CameraConfigureManager: CameraRecivable {
         cameraComponents.position = position
         return try getCamera(position: position)
     }
-    
-    private func configureDeviceInput(cameraDevice: AVCaptureDevice) throws {
         
-        cameraComponents.cameraInput = try AVCaptureDeviceInput(device: cameraDevice)
-        
-        guard
-            let cameraInput = cameraComponents.cameraInput,
-            cameraComponents.captureSession.canAddInput(cameraInput) else {
-            return
-        }
-        cameraComponents.captureSession.addInput(cameraInput)
-    }
-    
     private func configurePhotoOutput() throws {
         
         cameraComponents.photoOutput = AVCapturePhotoOutput()

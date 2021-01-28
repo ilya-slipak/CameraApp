@@ -16,6 +16,7 @@ final class CameraViewController: UIViewController, AlertShowable {
     @IBOutlet private weak var flashButton: UIButton!
     @IBOutlet private weak var cameraButton: UIButton!
     @IBOutlet private weak var previewView: PreviewView!
+    @IBOutlet private weak var changeCameraButton: UIButton!
     
     // MARK: - Private Properties
     
@@ -42,40 +43,62 @@ final class CameraViewController: UIViewController, AlertShowable {
         stopCaptureSession()
     }
     
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
+    }
+    
     // MARK: - Private Methods
     
     private func setupView() {
         
         flashButton.tintColor = .white
         cameraButton.layer.cornerRadius = 40
+        changeCameraButton.layer.cornerRadius = 25
         setupPinchGesture()
         setupTapGesture()
+        updateUI(isRecording: false)
+        setupFlashButton(with: .off)
         cameraManager.prepareCaptureSession(position: .front)
+    }
+    
+    private func updateUI(isRecording: Bool) {
+        
+        if isRecording {
+            flashButton.isHidden = true
+            changeCameraButton.isHidden = true
+            let recordImage = UIImage(named: "recordVideoIcon")
+            cameraButton.setImage(recordImage, for: .normal)
+        } else {
+            flashButton.isHidden = false
+            changeCameraButton.isHidden = false
+            let captureImage = UIImage(named: "makePhotoIcon")
+            cameraButton.setImage(captureImage, for: .normal)
+        }
     }
         
     private func setupPinchGesture() {
         
         let pinchRecognizer = UIPinchGestureRecognizer(target: self,
                                                        action: #selector(pinchToZoom(_:)))
-        view.addGestureRecognizer(pinchRecognizer)
+        previewView.addGestureRecognizer(pinchRecognizer)
     }
     
     private func setupTapGesture() {
         
         let pinchRecognizer = UITapGestureRecognizer(target: self,
                                                      action: #selector(focusAction(_:)))
-        view.addGestureRecognizer(pinchRecognizer)
+        previewView.addGestureRecognizer(pinchRecognizer)
     }
     
     private func setupFlashButton(with flashMode: AVCaptureDevice.FlashMode) {
         
         switch flashMode {
         case .auto:
-            flashButton.setTitle("Auto", for: .normal)
+            flashButton.setImage(UIImage(named: "autoFlashIcon"), for: .normal)
         case .on:
-            flashButton.setTitle("On", for: .normal)
+            flashButton.setImage(UIImage(named: "enableFlashIcon"), for: .normal)
         case .off:
-            flashButton.setTitle("Off", for: .normal)
+            flashButton.setImage(UIImage(named: "disableFlashIcon"), for: .normal)
         default:
             return
         }
@@ -232,8 +255,7 @@ final class CameraViewController: UIViewController, AlertShowable {
         switch sender.state {
             
         case .began:
-            let recordImage = UIImage(named: "recordVideoIcon")
-            cameraButton.setImage(recordImage, for: .normal)
+            updateUI(isRecording: true)
             cameraManager.startRecording { [weak self] result in
                 switch result {
                 case .success(let videoURL):
@@ -244,8 +266,7 @@ final class CameraViewController: UIViewController, AlertShowable {
                 }
             }
         case .ended:
-            let captureImage = UIImage(named: "makePhotoIcon")
-            cameraButton.setImage(captureImage, for: .normal)
+            updateUI(isRecording: false)
             cameraManager.stopRecording()
         default:
             break

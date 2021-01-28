@@ -26,6 +26,10 @@ final class PreviewPhotoViewController: UIViewController {
         previewImageView.image = image
     }
     
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
+    }
+    
     @IBAction func closeButtonAction(_ sender: UIButton) {
         
         dismiss(animated: false)
