@@ -205,32 +205,11 @@ final class CameraViewController: UIViewController, AlertShowable {
     @objc
     func pinchToZoom(_ pinch: UIPinchGestureRecognizer) {
         
-        guard let device = cameraManager.getCurrentCaptureDevice() else {
-            return
-        }
-        
-        func minMaxZoom(_ factor: CGFloat) -> CGFloat { return min(max(factor, 1.0), device.activeFormat.videoMaxZoomFactor) }
-        
-        func update(scale factor: CGFloat) {
-            do {
-                try device.lockForConfiguration()
-                defer { device.unlockForConfiguration() }
-                device.videoZoomFactor = factor
-            } catch {
-                debugPrint(error)
-            }
-        }
-        
-        let newScaleFactor = minMaxZoom(pinch.scale * zoomFactor)
-        
         switch pinch.state {
-        case .began:
-            fallthrough
         case .changed:
-            update(scale: newScaleFactor)
+            cameraManager.startZoom(scale: pinch.scale)
         case .ended:
-            zoomFactor = minMaxZoom(newScaleFactor)
-            update(scale: zoomFactor)
+            cameraManager.finishZoom(scale: pinch.scale)
         default:
             break
         }

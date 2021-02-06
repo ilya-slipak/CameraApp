@@ -6,7 +6,6 @@
 //  Copyright © 2021 Ilya Slipak. All rights reserved.
 //
 
-import Foundation
 import AVFoundation
 
 protocol CameraActionManagerProtocol {
@@ -15,5 +14,11 @@ protocol CameraActionManagerProtocol {
     func startRecording(delegate: AVCaptureFileOutputRecordingDelegate)
     func stopRecording()
     func switchFlashMode() -> AVCaptureDevice.FlashMode
-    func switchCamera() -> CameraOrientation
+    func switchCamera(to camera: AVCaptureDevice) throws
+    func startZoom(scale: CGFloat)
+    func finishZoom(scale: CGFloat)
+    func focus(with focusMode: AVCaptureDevice.FocusMode,
+               exposureMode: AVCaptureDevice.ExposureMode,
+               at devicePoint: CGPoint,
+               monitorSubjectAreaChange: Bool)
 }

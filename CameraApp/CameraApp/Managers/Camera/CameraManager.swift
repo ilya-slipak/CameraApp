@@ -8,7 +8,9 @@
 
 import AVFoundation
 
-typealias CameraCompletion = (SessionSetupResult) -> Void
+// MARK: - Typealias
+
+typealias CameraSessionStatusCompletion = (SessionSetupResult) -> Void
 typealias PhotoCompletion = (Result<Data, Error>) -> Void
 typealias VideoCompletion = (Result<URL, Error>) -> Void
 
@@ -18,9 +20,21 @@ final class CameraManager: NSObject {
     
     private var cameraComponents: CameraComponents = CameraComponents()
     private var cameraActionManager: CameraActionManagerProtocol!
-    private var cameraConfigureManager: (CameraConfigureManagerProtocol & CameraConfigurable)!
+    private var cameraConfigureManager: CameraConfigureManagerProtocol!
     private var photoCompletion: PhotoCompletion?
     private var videoCompletion: VideoCompletion?
+    
+    // MARK: - Private Methods
+    
+    private func switchCamera(to position: AVCaptureDevice.Position) {
+        
+        do {
+            let camera = try cameraConfigureManager.configureCameraDevice(at: position)
+            try cameraActionManager.switchCamera(to: camera)
+        } catch let error as CameraError {
+            print("Failed to get camera:", error)
+        } catch { return }
+    }
 }
 
 // MARK: - AVCapturePhotoCaptureDelegate
@@ -64,10 +78,14 @@ extension CameraManager: AVCaptureFileOutputRecordingDelegate {
 
 extension CameraManager: CameraManagerProtocol {
     
+    // MARK: - Properties
+    
     var captureSession: AVCaptureSession {
         
         return cameraComponents.captureSession
     }
+    
+    // MARK: - Configure Methods
     
     func prepareCaptureSession(position: AVCaptureDevice.Position) {
         
@@ -76,7 +94,7 @@ extension CameraManager: CameraManagerProtocol {
         cameraConfigureManager.createCaptureSession(position: position)
     }
     
-    func startCaptureSession(completion: @escaping CameraCompletion) {
+    func startCaptureSession(completion: @escaping CameraSessionStatusCompletion) {
         
         cameraConfigureManager.startCaptureSession(completion: completion)
     }
@@ -85,16 +103,13 @@ extension CameraManager: CameraManagerProtocol {
         
         cameraConfigureManager.stopCaptureSession(completion: completion)
     }
-    
-    func getCurrentCaptureDevice() -> AVCaptureDevice? {
         
-        return try? cameraConfigureManager.getCamera(position: cameraComponents.position)
-    }
-    
     func getCurrentFlashMode() -> AVCaptureDevice.FlashMode {
         
         return cameraConfigureManager.getCurrenFlashMode()
     }
+    
+    // MARK: - Action Methods
     
     func captureImage(photoCompletion: @escaping PhotoCompletion) {
         
@@ -115,7 +130,14 @@ extension CameraManager: CameraManagerProtocol {
     
     func switchCamera() {
         
-        _ = cameraActionManager.switchCamera()
+        switch cameraComponents.position {
+        case .front:
+            switchCamera(to: .back)
+        case .back:
+            switchCamera(to: .front)
+        default:
+            break
+        }
     }
     
     func switchFlashMode() -> AVCaptureDevice.FlashMode {
@@ -123,14 +145,24 @@ extension CameraManager: CameraManagerProtocol {
         return cameraActionManager.switchFlashMode()
     }
     
+    func startZoom(scale: CGFloat) {
+        
+        cameraActionManager.startZoom(scale: scale)
+    }
+    
+    func finishZoom(scale: CGFloat) {
+        
+        cameraActionManager.finishZoom(scale: scale)
+    }
+    
     func focus(with focusMode: AVCaptureDevice.FocusMode,
                exposureMode: AVCaptureDevice.ExposureMode,
                at texturePoint: CGPoint,
                monitorSubjectAreaChange: Bool) {
         
-        cameraConfigureManager.focus(with: focusMode,
-                                     exposureMode: exposureMode,
-                                     at: texturePoint,
-                                     monitorSubjectAreaChange: monitorSubjectAreaChange)
+        cameraActionManager.focus(with: focusMode,
+                                  exposureMode: exposureMode,
+                                  at: texturePoint,
+                                  monitorSubjectAreaChange: monitorSubjectAreaChange)
     }
 }

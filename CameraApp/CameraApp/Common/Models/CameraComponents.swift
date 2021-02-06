@@ -6,7 +6,6 @@
 //  Copyright © 2020 Ilya Slipak. All rights reserved.
 //
 
-import Foundation
 import AVFoundation
 
 final class CameraComponents {
@@ -16,14 +15,7 @@ final class CameraComponents {
     var audioInput: AVCaptureDeviceInput?
     var photoOutput: AVCapturePhotoOutput?
     var movieOutput: AVCaptureMovieFileOutput?
-    var currentCameraPosition: CameraPosition?
-    var flashMode: AVCaptureDevice.FlashMode = .off
+    var cameraFlashMode: AVCaptureDevice.FlashMode = .off
     var position: AVCaptureDevice.Position = .unspecified
     var sessionStatus: SessionSetupResult = .notAuthorized
-}
-
-struct CameraOrientation {
-    
-    var orientation: AVCaptureVideoOrientation
-    var position: AVCaptureDevice.Position
 }

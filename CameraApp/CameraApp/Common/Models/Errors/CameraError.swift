@@ -14,6 +14,11 @@ enum CameraError: Error {
     case captureSessionIsMissing
     case inputsAreInvalid
     case invalidOperation
+    case emptyCameraInput
+    case failedToAddCameraInput
+    case failedToAddAudioInput
+    case failedToAddPhotoOutput
+    case failedToAddMovieOutput
     case noCamerasAvailable
     case unknown
 }

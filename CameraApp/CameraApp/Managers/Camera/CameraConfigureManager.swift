@@ -10,7 +10,7 @@ import AVFoundation
 
 typealias SessionCameraCompletion = (SessionSetupResult)
 
-final class CameraConfigureManager: CameraConfigurable {
+final class CameraConfigureManager {
     
     // MARK: - Private Properties
     
@@ -33,8 +33,7 @@ final class CameraConfigureManager: CameraConfigurable {
         
         do {
             cameraComponents.captureSession.beginConfiguration()
-            let camera =  try configureCaptureDevice(position: position)
-            try configureDeviceInput(cameraDevice: camera, cameraComponents: cameraComponents)
+            try configureCameraInput(at: position)
             try configurePhotoOutput()
             try configureMovieOutput()
             if cameraComponents.captureSession.canSetSessionPreset(.hd1280x720) {
@@ -42,7 +41,7 @@ final class CameraConfigureManager: CameraConfigurable {
             }
         } catch {
             debugPrint("Error:", error)
-            self.cameraComponents.sessionStatus = .configurationFailed
+            cameraComponents.sessionStatus = .configurationFailed
         }
         cameraComponents.captureSession.commitConfiguration()
     }
@@ -67,47 +66,57 @@ final class CameraConfigureManager: CameraConfigurable {
         }
     }
     
-    private func configureCaptureDevice(position: AVCaptureDevice.Position) throws -> AVCaptureDevice {
+    private func configureCameraInput(at position: AVCaptureDevice.Position) throws {
+        
+        let cameraDevice = try configureCameraDevice(at: position)
+        let cameraInput = try AVCaptureDeviceInput(device: cameraDevice)
+        
+        guard cameraComponents.captureSession.canAddInput(cameraInput) else {
+            throw CameraError.failedToAddCameraInput
+        }
         
         cameraComponents.position = position
-        return try getCamera(position: position)
+        cameraComponents.cameraInput = cameraInput
+        cameraComponents.captureSession.addInput(cameraInput)
     }
-        
+            
     private func configurePhotoOutput() throws {
         
-        cameraComponents.photoOutput = AVCapturePhotoOutput()
-        guard let photoOutput = cameraComponents.photoOutput else {
-            return
-        }
-        photoOutput.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])], completionHandler: nil)
+        let photoOutput = AVCapturePhotoOutput()
+        let format = [AVVideoCodecKey: AVVideoCodecType.jpeg]
+        let settings = [AVCapturePhotoSettings(format: format)]
+        photoOutput.setPreparedPhotoSettingsArray(settings, completionHandler: nil)
         
-        if cameraComponents.captureSession.canAddOutput(photoOutput) {
-            cameraComponents.captureSession.addOutput(photoOutput)
+        guard cameraComponents.captureSession.canAddOutput(photoOutput) else {
+            throw CameraError.failedToAddPhotoOutput
         }
+        
+        cameraComponents.photoOutput = photoOutput
+        cameraComponents.captureSession.addOutput(photoOutput)
     }
     
     private func configureMovieOutput() throws {
         
-        cameraComponents.movieOutput = AVCaptureMovieFileOutput()
+        let movieOutput = AVCaptureMovieFileOutput()
         
         if let microphone = AVCaptureDevice.default(for: .audio) {
-            do {
-                let micInput = try AVCaptureDeviceInput(device: microphone)
-                if cameraComponents.captureSession.canAddInput(micInput) {
-                    cameraComponents.captureSession.addInput(micInput)
-                }
-            } catch {
-                print("Error setting device audio input: \(error)")
+            
+            let micInput = try AVCaptureDeviceInput(device: microphone)
+            
+            guard cameraComponents.captureSession.canAddInput(micInput) else {
+                throw CameraError.failedToAddAudioInput
             }
+            
+            cameraComponents.audioInput = micInput
+            cameraComponents.captureSession.addInput(micInput)
         }
         
-        guard let movieOutput = cameraComponents.movieOutput else {
-            return
+        guard cameraComponents.captureSession.canAddOutput(movieOutput) else {
+            throw CameraError.failedToAddMovieOutput
         }
         
-        if cameraComponents.captureSession.canAddOutput(movieOutput) {
-            cameraComponents.captureSession.addOutput(movieOutput)
-        }
+        cameraComponents.movieOutput = movieOutput
+        cameraComponents.captureSession.addOutput(movieOutput)
     }
     
     private func setupErrorObserver() {
@@ -141,7 +150,7 @@ final class CameraConfigureManager: CameraConfigurable {
 // MARK: - CameraConfigureManagerProtocol
 
 extension CameraConfigureManager: CameraConfigureManagerProtocol {
-    
+
     func createCaptureSession(position: AVCaptureDevice.Position) {
         
         checkAccess(for: .video)
@@ -150,7 +159,7 @@ extension CameraConfigureManager: CameraConfigureManagerProtocol {
         }
     }
     
-    func startCaptureSession(completion: @escaping CameraCompletion) {
+    func startCaptureSession(completion: @escaping CameraSessionStatusCompletion) {
         
         sessionQueue.async {
             
@@ -180,43 +189,42 @@ extension CameraConfigureManager: CameraConfigureManagerProtocol {
     
     func getCurrenFlashMode() -> AVCaptureDevice.FlashMode {
         
-        return cameraComponents.flashMode
+        return cameraComponents.cameraFlashMode
     }
     
     func getCurrentCameraPosition() -> AVCaptureDevice.Position {
         
         return cameraComponents.position
     }
-    
-    func focus(with focusMode: AVCaptureDevice.FocusMode,
-               exposureMode: AVCaptureDevice.ExposureMode,
-               at devicePoint: CGPoint,
-               monitorSubjectAreaChange: Bool) {
         
-        guard let videoDevice = cameraComponents.cameraInput?.device
-        else {
-            return
-        }
+    func configureCameraDevice(at position: AVCaptureDevice.Position) throws -> AVCaptureDevice {
         
-        sessionQueue.async {
+        let session = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera],
+                                                       mediaType: .video,
+                                                       position: position)
+        
+        let cameras = session.devices.compactMap { $0 }
+        guard
+            !cameras.isEmpty,
+            let camera = cameras.first else {
             
-            do {
-                try videoDevice.lockForConfiguration()
-                if videoDevice.isFocusPointOfInterestSupported && videoDevice.isFocusModeSupported(focusMode) {
-                    videoDevice.focusPointOfInterest = devicePoint
-                    videoDevice.focusMode = focusMode
-                }
-                
-                if videoDevice.isExposurePointOfInterestSupported && videoDevice.isExposureModeSupported(exposureMode) {
-                    videoDevice.exposurePointOfInterest = devicePoint
-                    videoDevice.exposureMode = exposureMode
-                }
-                
-                videoDevice.isSubjectAreaChangeMonitoringEnabled = monitorSubjectAreaChange
-                videoDevice.unlockForConfiguration()
-            } catch {
-                print("Could not lock device for configuration: \(error)")
-            }
+            throw CameraError.noCamerasAvailable
         }
+        
+        try camera.lockForConfiguration()
+        if camera.isFocusModeSupported(.continuousAutoFocus) {
+            camera.focusMode = .continuousAutoFocus
+        }
+        
+        if camera.isExposureModeSupported(.continuousAutoExposure) {
+            camera.exposureMode = .continuousAutoExposure
+        }
+        
+        if camera.isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) {
+            camera.whiteBalanceMode = .continuousAutoWhiteBalance
+        }
+        camera.unlockForConfiguration()
+        
+        return camera
     }
 }

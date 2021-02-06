@@ -6,18 +6,14 @@
 //  Copyright © 2021 Ilya Slipak. All rights reserved.
 //
 
-import Foundation
 import AVFoundation
 
 protocol CameraConfigureManagerProtocol {
     
     func createCaptureSession(position: AVCaptureDevice.Position)
-    func startCaptureSession(completion: @escaping CameraCompletion)
+    func startCaptureSession(completion: @escaping CameraSessionStatusCompletion)
     func stopCaptureSession(completion: @escaping () -> Void)
     func getCurrenFlashMode() -> AVCaptureDevice.FlashMode
     func getCurrentCameraPosition() -> AVCaptureDevice.Position
-    func focus(with focusMode: AVCaptureDevice.FocusMode,
-               exposureMode: AVCaptureDevice.ExposureMode,
-               at devicePoint: CGPoint,
-               monitorSubjectAreaChange: Bool)
+    func configureCameraDevice(at position: AVCaptureDevice.Position) throws -> AVCaptureDevice
 }
