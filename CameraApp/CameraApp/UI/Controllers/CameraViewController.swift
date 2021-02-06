@@ -19,8 +19,7 @@ final class CameraViewController: UIViewController, AlertShowable {
     @IBOutlet private weak var changeCameraButton: UIButton!
     
     // MARK: - Private Properties
-    
-    private var zoomFactor: CGFloat = 1.0
+
     private let cameraManager: CameraManagerProtocol = CameraManager()
     
     // MARK: - Lifecycle Methods
@@ -63,17 +62,10 @@ final class CameraViewController: UIViewController, AlertShowable {
     
     private func updateUI(isRecording: Bool) {
         
-        if isRecording {
-            flashButton.isHidden = true
-            changeCameraButton.isHidden = true
-            let recordImage = UIImage(named: "recordVideoIcon")
-            cameraButton.setImage(recordImage, for: .normal)
-        } else {
-            flashButton.isHidden = false
-            changeCameraButton.isHidden = false
-            let captureImage = UIImage(named: "makePhotoIcon")
-            cameraButton.setImage(captureImage, for: .normal)
-        }
+        let image = isRecording ? UIImage(named: "recordVideoIcon") : UIImage(named: "makePhotoIcon")
+        flashButton.isHidden = isRecording
+        changeCameraButton.isHidden = isRecording
+        cameraButton.setImage(image, for: .normal)
     }
         
     private func setupPinchGesture() {

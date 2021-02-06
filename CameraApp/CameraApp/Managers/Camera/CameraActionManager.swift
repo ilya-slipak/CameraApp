@@ -25,6 +25,7 @@ final class CameraActionManager {
     }
     
     private func minMaxZoom(factor: CGFloat, device: AVCaptureDevice) -> CGFloat {
+        
         return min(max(factor, 1.0), device.activeFormat.videoMaxZoomFactor)
     }
     

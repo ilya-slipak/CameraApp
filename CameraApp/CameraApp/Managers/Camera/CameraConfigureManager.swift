@@ -204,6 +204,7 @@ extension CameraConfigureManager: CameraConfigureManagerProtocol {
                                                        position: position)
         
         let cameras = session.devices.compactMap { $0 }
+        
         guard
             !cameras.isEmpty,
             let camera = cameras.first else {
