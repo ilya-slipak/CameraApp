@@ -19,8 +19,8 @@ final class CameraManager: NSObject {
     // MARK: - Private Properties
     
     private var cameraComponents: CameraComponents = CameraComponents()
-    private var cameraActionManager: CameraActionManagerProtocol!
-    private var cameraConfigureManager: CameraConfigureManagerProtocol!
+    private var cameraActionManager: CameraActionManaging!
+    private var cameraConfigureManager: CameraConfigureManaging!
     private var photoCompletion: PhotoCompletion?
     private var videoCompletion: VideoCompletion?
     
@@ -74,9 +74,9 @@ extension CameraManager: AVCaptureFileOutputRecordingDelegate {
     }
 }
 
-// MARK: - CameraManagerProtocol
+// MARK: - CameraManaging
 
-extension CameraManager: CameraManagerProtocol {
+extension CameraManager: CameraManaging {
     
     // MARK: - Properties
     

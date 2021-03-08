@@ -9,7 +9,7 @@
 import UIKit
 import AVFoundation
 
-final class CameraViewController: UIViewController, AlertShowable {
+final class CameraViewController: UIViewController, AlertPresentable {
     
     // MARK: - IBOutlet Properties
     
@@ -20,7 +20,7 @@ final class CameraViewController: UIViewController, AlertShowable {
     
     // MARK: - Private Properties
 
-    private let cameraManager: CameraManagerProtocol = CameraManager()
+    private let cameraManager: CameraManaging = CameraManager()
     
     // MARK: - Lifecycle Methods
     

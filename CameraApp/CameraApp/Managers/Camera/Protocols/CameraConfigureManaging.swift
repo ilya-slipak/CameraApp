@@ -8,7 +8,7 @@
 
 import AVFoundation
 
-protocol CameraConfigureManagerProtocol {
+protocol CameraConfigureManaging {
     
     func createCaptureSession(position: AVCaptureDevice.Position)
     func startCaptureSession(completion: @escaping CameraSessionStatusCompletion)

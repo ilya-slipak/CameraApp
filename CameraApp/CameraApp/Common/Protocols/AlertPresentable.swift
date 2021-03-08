@@ -8,13 +8,13 @@
 
 import UIKit
 
-protocol AlertShowable: class {
+protocol AlertPresentable: class {
     
     func showMessage(with message: String)
     func showSettingsAlert(with settingsType: SettingsAlertType)
 }
 
-extension AlertShowable where Self: UIViewController {
+extension AlertPresentable where Self: UIViewController {
     
     func showMessage(with message: String) {
         

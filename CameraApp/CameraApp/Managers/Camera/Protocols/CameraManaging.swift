@@ -8,7 +8,7 @@
 
 import AVFoundation
 
-protocol CameraManagerProtocol {
+protocol CameraManaging {
     
     // MARK: - Properties
     

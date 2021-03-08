@@ -12,7 +12,7 @@ final class CameraActionManager {
     
     // MARK: - Private Properties
     
-    private var sessionQueue = DispatchQueue(label: "camera.session.queue")
+    private var actionQueue = DispatchQueue(label: "camera.action.queue")
     private var cameraComponents: CameraComponents
     private var newScaleFactor: CGFloat = 0
     private var zoomFactor: CGFloat = 1.0
@@ -41,9 +41,9 @@ final class CameraActionManager {
     }
 }
 
-// MARK: - CameraActionManagerProtocol
+// MARK: - CameraActionManaging
 
-extension CameraActionManager: CameraActionManagerProtocol {
+extension CameraActionManager: CameraActionManaging {
     
     func captureImage(delegate: AVCapturePhotoCaptureDelegate) {
         
@@ -162,7 +162,7 @@ extension CameraActionManager: CameraActionManagerProtocol {
             return
         }
         
-        sessionQueue.async {
+        actionQueue.async {
             
             do {
                 try camera.lockForConfiguration()

@@ -8,7 +8,7 @@
 
 import AVFoundation
 
-protocol CameraActionManagerProtocol {
+protocol CameraActionManaging {
     
     func captureImage(delegate: AVCapturePhotoCaptureDelegate)
     func startRecording(delegate: AVCaptureFileOutputRecordingDelegate)

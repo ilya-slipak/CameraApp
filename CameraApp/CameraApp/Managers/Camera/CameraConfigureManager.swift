@@ -14,7 +14,7 @@ final class CameraConfigureManager {
     
     // MARK: - Private Properties
     
-    private var sessionQueue = DispatchQueue(label: "camera.session.queue")
+    private var configureQueue = DispatchQueue(label: "camera.configure.queue")
     private var cameraComponents: CameraComponents
     
     init(with components: CameraComponents) {
@@ -50,14 +50,14 @@ final class CameraConfigureManager {
         
         switch AVCaptureDevice.authorizationStatus(for: mediaType) {
         case .notDetermined:
-            sessionQueue.suspend()
+            configureQueue.suspend()
             AVCaptureDevice.requestAccess(for: .video) { [weak self] isGranted in
                 if isGranted {
                     self?.cameraComponents.sessionStatus = .authorized
                 } else {
                     self?.cameraComponents.sessionStatus = .notAuthorized
                 }
-                self?.sessionQueue.resume()
+                self?.configureQueue.resume()
             }
         case .authorized:
             cameraComponents.sessionStatus = .authorized
@@ -137,7 +137,7 @@ final class CameraConfigureManager {
         print("Capture session runtime error: \(error)")
         // If media services were reset, and the last start succeeded, restart the session.
         if error.code == .mediaServicesWereReset {
-            sessionQueue.async {
+            configureQueue.async {
                 
                 if !self.cameraComponents.captureSession.isRunning {
                     self.cameraComponents.captureSession.startRunning()
@@ -147,21 +147,21 @@ final class CameraConfigureManager {
     }
 }
 
-// MARK: - CameraConfigureManagerProtocol
+// MARK: - CameraConfigureManaging
 
-extension CameraConfigureManager: CameraConfigureManagerProtocol {
+extension CameraConfigureManager: CameraConfigureManaging {
 
     func createCaptureSession(position: AVCaptureDevice.Position) {
         
         checkAccess(for: .video)
-        sessionQueue.async {
+        configureQueue.async {
             self.setupCaptureSession(position: position)
         }
     }
     
     func startCaptureSession(completion: @escaping CameraSessionStatusCompletion) {
         
-        sessionQueue.async {
+        configureQueue.async {
             
             guard self.cameraComponents.sessionStatus == .authorized else {
                 DispatchQueue.main.async {
@@ -179,7 +179,7 @@ extension CameraConfigureManager: CameraConfigureManagerProtocol {
     
     func stopCaptureSession(completion: @escaping () -> Void) {
         
-        sessionQueue.async {
+        configureQueue.async {
             self.cameraComponents.captureSession.stopRunning()
             DispatchQueue.main.async {
                 completion()
